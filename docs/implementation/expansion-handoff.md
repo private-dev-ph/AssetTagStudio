@@ -58,3 +58,5 @@ Reviewed workspace63808b9 merged into feature-expansion as e57f9f3f71bd2fd4f1106
 ## Serial worker startup regression
 
 Final branch run32/33 passed; quota fixed. Serial simple regex intermittently timed out because100ms deadline included native worker startup (observed alert in error context). Root will add ready handshake with separate bounded5s startup and100ms execution budgets, preserving expensive-pattern isolation. Do not declare completion yet. Branch serial-worker-startup will be independently tested and merged into feature-expansion; no main/remote action.
+
+Serial startup fix verified: ready handshake, separately bounded5s startup/100ms execution,8 focused unit tests and lint pass; unchanged Serial browser workflow repeated5/5 passes in local Edge. Initial test-mock lint aliasing issue corrected without suppression. Commit/merge this bounded fix, then final full175unit/33browser verification from feature-expansion. Source code remains local; main unchanged.

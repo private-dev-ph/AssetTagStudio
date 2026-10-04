@@ -22,7 +22,8 @@ export function testSerialPattern(source: string, values: string[]): Promise<boo
   return new Promise((resolve, reject) => {
     const worker = new Worker(new URL('./regex.worker.ts', import.meta.url), { type: 'module' });
     const id = Date.now() + Math.floor(Math.random() * 1_000_000);
-    const timeout = setTimeout(() => finish(new Error('Pattern validation exceeded its time limit. Simplify the pattern.')), 100);
+    let timeout = setTimeout(() => finish(new Error('Pattern worker startup exceeded its time limit. Reload and retry.')), 5000);
+    let started = false;
     let settled = false;
     const finish = (error?: Error, matches?: boolean[]) => {
       if (settled) return;
@@ -30,12 +31,19 @@ export function testSerialPattern(source: string, values: string[]): Promise<boo
       if (error) reject(error); else resolve(matches ?? []);
     };
     worker.onmessage = event => {
+      if (settled) return;
+      if (event.data?.ready && !started) {
+        started = true; clearTimeout(timeout);
+        timeout = setTimeout(() => finish(new Error('Pattern validation exceeded its time limit. Simplify the pattern.')), 100);
+        try { worker.postMessage({ id, source, values }); } catch { finish(new Error('Could not send serial values for validation.')); }
+        return;
+      }
+      if (!started) return;
       if (event.data?.id !== id) return;
       if (event.data.ok) finish(undefined, event.data.matches);
       else finish(new Error('Enter a valid regular expression.'));
     };
     worker.onerror = () => finish(new Error('Pattern worker failed. Simplify the pattern and try again.'));
-    try { worker.postMessage({ id, source, values }); } catch { finish(new Error('Could not send serial values for validation.')); }
   });
 }
 function transform(value: string, options: SerialOptions): string {

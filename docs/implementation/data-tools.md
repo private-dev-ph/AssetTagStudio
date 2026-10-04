@@ -6,7 +6,7 @@ This branch implements Data Health, Asset ID Generator, and Serial Tools as `Dat
 
 Import normalization retains original header text and the number of skipped empty data rows in `Dataset.importAudit`. Duplicate header rejection remains unchanged. Empty source rows are counted for reporting and are not retained.
 
-Custom serial patterns are limited to 120 characters, checked for known high-risk constructs, and evaluated in a module worker with a 100 ms timeout. The worker is terminated on success, error, timeout, and posting failure. Serial input is limited to 500 characters per cell and 2,000 selected rows per preview. ID previews are limited to 5,000 rows; displayed previews show at most 200 rows.
+Custom serial patterns are limited to 120 characters, checked for known high-risk constructs, and evaluated in a module worker with a 100 ms execution timeout after a ready handshake and separately bounded five-second startup. The worker is terminated on success, error, timeout, and posting failure. Serial input is limited to 500 characters per cell and 2,000 selected rows per preview. ID previews are limited to 5,000 rows; displayed previews show at most 200 rows.
 
 Focused local verification commands (Vitest needed the runner config loader in this restricted worktree):
 
