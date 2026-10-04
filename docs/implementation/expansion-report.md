@@ -6,7 +6,7 @@ Date:2026-10-05. Scope: all twelve requested features plus user testing improvem
 
 - Original and unchanged main: `345071383d7029423e805efb799204e6852f69f7`.
 - Latest verified source checkpoint: `38d21bd69603d3a0abb90fc2ac727496e07f1544` on `feature-expansion`. Documentation commits follow this verified source; resolve the exact final tip with `git rev-parse feature-expansion`.
-- Main/live site unchanged; no production deployment or hosted/CI test initiated. Branch publication requested after verification; final documentation committed before pushing origin/feature-expansion.
+- Main/live site unchanged; no production deployment or hosted/CI test initiated. Branch published to origin/feature-expansion with upstream configured, starting at publication checkpointb9f0cc18cad7090a7731fee0adba4e0c394d7468; final closure documentation follows. Git confirms final local/remote tips match and working tree clean. No PR/main merge performed.
 - All13 feature-branch tips verified ancestors of feature-expansion. No required work stranded on an abandoned branch.
 
 ## Branches
