@@ -1,0 +1,27 @@
+# Expansion architecture
+
+## Scope and repository boundary
+
+All12features from the owner's supplied plan are requested. Integrate only on local `feature-expansion`, based on main3450713. Main and hosting stay untouched. No publishing or remote tests. Independent feature branches/worktrees start from the merged foundation and are deliberately integrated in dependency order.
+
+## Shared interfaces
+
+- Dataset/AssetRecord remain string-valued. Internal record.id stays stable; generated identifiers alter a chosen values column. Optional import audit stores header provenance and discarded-empty-row count in memory, not spreadsheet retention.
+- `src/core/payload.ts` is the sole raw/template/URL/FieldLens/location resolver. Legacy payload strings remain text by default. HTTP/location-mode tokens are component-encoded; FieldLens tokens stay unescaped and are strictly validated because its current mobile resolver rejects percent-encoded identifiers. Accepted schemes are mode-specific. No payload automatically opens links or performs requests. Renderer and tools consume the same resolver.
+- `src/core/dataset.ts` supplies own-property reads/cloning, limits and bounded undo snapshot history. Transformation previews are immutable and only explicit Apply commits changes. Header remaps update identifier/template field references atomically. Root owns selected IDs/settings snapshot restoration and export mutation freeze.
+- LabelTemplate retains old required fields, adds optional payload mode/mode-specific rendering and supports code.type none. PageSettings adds optional offsetXMm/offsetYMm default0. Existing templates/preferences migrate by optional defaults. Renderer/layout/PDF extensions are owned by print work; no competing renderer.
+- `src/studio/contracts.ts` defines shared page props and hash view IDs. App owns dataset/template/page/selection/undo/last completed job; subpages do not own parallel datasets. Asset Labels remains default; browser back/forward/deep hashes select pages without a routing dependency.
+- `src/core/printJob.ts` (print owner) defines immutable print-job snapshot and row-major physical placements. PDF and manifest use those exact placements, payloads and records. Last successful PDF snapshot supplies printed manifests even after later edits; canceled/failed jobs do not replace it. FieldLens PDF+CSV derive from one snapshot.
+- `src/features/storage/library.ts` (template owner) exposes `listEntries(store)`, `putEntry(store,entry)`, `deleteEntry(store,id)` with stores templates/printers and entry{id,name,json}. IndexedDB operations are bounded and errors surface to callers. Template/profile callers strictly parse/serialize settings-only schemas, rejecting unknown/version/malformed data; no automatic imported-row storage.
+- `StudioPageProps`: dataset, selectedIds, idField, template, page, busy, previewImage, lastJob; onCommitDataset(next,description,columnMap?), onApplyTemplate(template,page?,name?), onPageChange(page), onIdentifierChange(field), onNavigate(view), onUndo(), canUndo, onExportJob():Promise<PrintJob|null>. Pages report failures visibly and cannot mutate while busy.
+
+## Ownership and acceptance
+
+- asset-data-tools: data-health/id-generator/serial-tools algorithms, their tests and DataToolsPage only. Selected rows, duplicates/blank tokens/overflow, preview/apply/undo and safe-regex worker/resource bounds.
+- template-library: templates strict documents/presets, generic IndexedDB adapter/tests, TemplatesPage only. Version/unknown-field/size failures, corrupted local data, CRUD errors and no inventory retention.
+- print-identity-packages: types optional refinements if agreed, renderer/layout/PDF/preferences extensions, printJob/manifest/fieldlens/calibration/specialized-labels, CalibrationPage/SpecialLabelsPage/ExportToolsPage and tests. Root alone edits App/styles/navigation; collaborators coordinate type changes.
+- root: core contracts/history/payload foundation, App shell and shared undo integration, PayloadPage, Code Inspector/image/camera worker, dependency/lock/notices changes, final review/testing/security/docs.
+
+## Security and compatibility
+
+Keep same-origin CSP and no remote processing. Camera permission becomes camera=(self) only on this private branch; acquisition requires explicit Start, secure origin/browser permission, audio=false, and all tracks/workers stop on cancel/unmount/navigation. Images have file/pixel/time limits; text is escaped, URI payloads never navigated. Decoder dependency choice needs primary-source/license/audit review and bundled local execution. Custom regex is limited or isolated with termination, never unbounded UI-thread work. CSV exports escape spreadsheet formula prefixes. History/preview/table/output bounds remain enforced. Settings imports cannot introduce executable markup, paths, network fetches or datasets. Existing tests and legacy preference behavior remain unless documented intentional extension.
