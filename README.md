@@ -8,7 +8,7 @@ Turn spreadsheet inventory into print-ready QR and Code 128 labels, entirely in 
 
 ## Why it exists
 
-Equipment lists already live in spreadsheets. Producing consistent labels should not require copying hundreds of QR codes into a document or giving a cloud service private inventory.
+Equipment lists already live in spreadsheets. Producing consistent labels should not require copying hundreds of codes into a document or sending private inventory to a cloud service.
 
 ## Features
 
@@ -19,11 +19,11 @@ Equipment lists already live in spreadsheets. Producing consistent labels should
 - Label presets/custom dimensions, padding and borders
 - A4, US Letter, A5 and custom paper; mm/inches, margins and gaps
 - Paginated print preview, multi-page PDF, progress and cancellation
-- Demo data, sample template, light/dark theme and keyboard-friendly controls
+- Sample data, downloadable CSV template, light/dark theme and keyboard-friendly controls
 
 ## Demo workflow
 
-Choose **Try Demo Data**, select an identifier, edit visible fields, pick 60 × 30 mm labels and A4, then export. Print at **100% / actual size**, with fit-to-page disabled.
+Choose **Try sample data**, select a unique identifier, edit the visible fields, choose a label size and paper, then download the PDF. Print at **100% / actual size**, with fit-to-page disabled. The downloadable CSV template is available at the top of the workspace.
 
 ![Demo workflow](docs/media/demo.gif)
 
@@ -35,7 +35,7 @@ Records stay in browser memory; only preferences persist. No analytics, remote p
 
 ## Architecture
 
-One normalized data model, one millimeter layout engine, one shared renderer for preview/PDF. This is a spreadsheet-to-physical-label workflow, not a spreadsheet editor. [Architecture diagram](docs/architecture.md).
+CSV and Excel normalize to one record model. A millimeter layout engine and shared label renderer keep the sheet preview aligned with the exported PDF. [Architecture and decisions](docs/architecture.md).
 
 ## Running locally
 
@@ -58,7 +58,7 @@ npm run build
 npm audit
 ```
 
-CI runs these checks on PRs and main/web-deployment pushes. Read [implementation progress](docs/implementation/progress.md) for actual verification results.
+CI is configured for pull requests and pushes to main or web-deployment. Read [implementation progress](docs/implementation/progress.md) for verification status.
 
 ## Deployment
 
@@ -74,5 +74,5 @@ Saved templates, logo/image fields, additional symbologies, printer profiles, of
 
 ## License
 
-No project license has been chosen by the repository owner. Third-party dependency licenses still apply; do not assume permission to redistribute this project beyond the owner's authorization.
+No project license has been chosen by the repository owner. Third-party notices are in [public/third-party-notices.txt](public/third-party-notices.txt); those notices do not grant a license to this project.
 
