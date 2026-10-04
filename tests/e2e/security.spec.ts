@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import jsQR from 'jsqr';
 import * as XLSX from 'xlsx';
 
-test('rendered QR decodes correctly and inventory stays local', async ({ page }) => {
+test('rendered QR decodes correctly and inventory stays local', async ({ page, baseURL }) => {
   const requests: { url: string; method: string; body: string | null }[] = [];
   const failures: string[] = [];
   page.on('request', request => requests.push({url: request.url(),method: request.method(),body: request.postData()}));
@@ -23,7 +23,7 @@ test('rendered QR decodes correctly and inventory stays local', async ({ page })
   expect(decoded?.data).toBe('PRIVATE-QR-7381');
   expect(failures).toEqual([]);
   expect(requests.every(r=>r.method==='GET' && !r.body && !r.url.includes('PRIVATE-QR-7381'))).toBe(true);
-  expect(requests.every(r=>new URL(r.url).origin==='http://127.0.0.1:4173')).toBe(true);
+  expect(requests.every(r=>new URL(r.url).origin===new URL(baseURL!).origin)).toBe(true);
   const saved=await page.evaluate(()=>JSON.stringify({...localStorage}));
   expect(saved).not.toContain('PRIVATE-QR-7381');
   await page.reload();
