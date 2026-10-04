@@ -250,6 +250,9 @@ test('template library reports quota failures and leaves no partial save', async
   await expect(page.getByRole('alert')).toContainText(/browser storage is full/i);
   await page.evaluate(() => { (window as Window & { failTemplateWrite?: boolean }).failTemplateWrite = false; });
   expect((await readLibrary(page)).templates).toHaveLength(0);
+  await page.getByRole('button', { name: 'Save current settings' }).click();
+  await expect(page.getByRole('status')).toContainText('Template saved to your library');
+  expect((await readLibrary(page)).templates).toHaveLength(1);
 });
 
 test('over-capacity printer storage offers a printers-only reset and preserves templates', async ({ page }) => {

@@ -94,21 +94,30 @@ export async function listEntries(store: LibraryStore): Promise<LibraryEntry[]> 
 export async function putEntry(store: LibraryStore, entry: LibraryEntry): Promise<void> {
   validateStore(store); validateEntry(entry);
   let capacityError: Error | undefined;
+  let operationError: unknown;
+  const fallback = 'Saved item could not be written to browser storage.';
   await runTransaction(store, 'readwrite', (objectStore, transaction) => {
     const countRequest = objectStore.count();
     countRequest.onsuccess = () => {
-      const existing = objectStore.get(entry.id);
+      let existing: IDBRequest;
+      try { existing = objectStore.get(entry.id); }
+      catch (error) { operationError = error; try { transaction.abort(); } catch { /* Already aborting. */ } return; }
       existing.onsuccess = () => {
         if (!existing.result && countRequest.result >= MAX_ENTRIES) {
           capacityError = new Error('This library already contains 100 items. Delete an item before saving another.');
           try { transaction.abort(); } catch { /* Already aborting. */ }
           return;
         }
-        objectStore.put({ ...entry });
+        try { objectStore.put({ ...entry }); }
+        catch (error) { operationError = error; try { transaction.abort(); } catch { /* Already aborting. */ } }
       };
+      existing.onerror = () => { operationError = existing.error; };
     };
     return;
-  }, 'Saved item could not be written to browser storage.').catch((error: unknown) => { throw capacityError ?? error; });
+  }, fallback).catch((error: unknown) => {
+    if (capacityError) throw capacityError;
+    throw transactionError(operationError ?? error, fallback);
+  });
 }
 
 export async function deleteEntry(store: LibraryStore, id: string): Promise<void> {
