@@ -1,13 +1,13 @@
 # Feature expansion implementation report
 
-Date: 2026-10-05. Scope: all twelve requested features, local development/testing only.
+Date:2026-10-05. Scope: all twelve requested features plus user testing improvements. All verification local; owner subsequently requested pushing feature-expansion to GitHub.
 
 ## Repository state
 
 - Original and unchanged main: `345071383d7029423e805efb799204e6852f69f7`.
-- Integration/source checkpoint: `4388d76a3773cd23d10b4dbe0a9c6c7c4e8878cd` on `feature-expansion`. Final documentation commits follow this verified source; resolve the exact final tip with `git rev-parse feature-expansion`.
-- No push, main merge, deployment or hosted/CI test was performed. The live site continues to serve main.
-- All ten required feature-branch tips were verified as ancestors of feature-expansion. No required work is stranded on an abandoned branch.
+- Latest verified source checkpoint: `38d21bd69603d3a0abb90fc2ac727496e07f1544` on `feature-expansion`. Documentation commits follow this verified source; resolve the exact final tip with `git rev-parse feature-expansion`.
+- Main/live site unchanged; no production deployment or hosted/CI test initiated. Branch publication requested after verification; final documentation committed before pushing origin/feature-expansion.
+- All13 feature-branch tips verified ancestors of feature-expansion. No required work stranded on an abandoned branch.
 
 ## Branches
 
@@ -70,3 +70,21 @@ Dedicated integrated root and independent read-only review; all concrete finding
 - Follow-up outside this expansion: bundle splitting, supported development ESLint migration, decoder maintenance monitoring, physical/cross-browser benchmarks, offline/PWA installation, direct browser printing, local logos/images and additional code formats.
 
 **Implementation confidence: 93% / 100.** Automated integration evidence is strong; physical hardware, other browsers, receiver CSV ingestion and large unique-PDF performance remain unverified.
+
+## User testing follow-up
+
+Implemented cable text rendering fix (explicit black ink, opposite-facing panels, responsive previews), horizontal tool headers (checkbox width restricted to asset selection; Health severity has its own minimum), ID eligibility/zero-result explanation, explicit overwrite protection, serial and ID batch start/count/Previous/Next controls, truthful local-data footer, themed light/dark scrollbars with forced-colour fallback, and GitHub/portfolio/Apache links. Added public/examples/id-generator.csv with three blank IDs and a walkthrough producing TEST-001..003. Templates now defer success announcements until library refresh completes.
+
+| Branch | Purpose | Integration |
+|---|---|---|
+| improve-data-tool-batches | Stable selected-row batches, protected IDs, guarded Apply continuation |895f962 ->7bbb0e7 ->54db38e |
+| polish-workspace-interface | Cable ink, all-table header checks, responsive previews, theme/footer, browser regressions |f7d55d9 ->54db38e |
+| stabilize-template-status | Prevent concurrent saved/loading announcements discovered by full-suite quota test |84748d3 /225b635 ->38d21bd |
+
+Architecture: shared renderer/host-owned dataset unchanged; no new dependency/schema/backend. Tool batches never alter global selection; Apply touches only explicit preview rows. ID sequence advances after successful Apply; position retained and Next remains explicit. External dataset/selection changes invalidate results/reset position; dedup resets shifted positions. All record/schema/worker/storage limits and undo compatibility preserved. Inventory still in memory; saved settings stay local. Privacy copy makes no false no-storage claim.
+
+Final source38d21bd verification: `npm test`181/181 across25 files; `npm run typecheck`, `npm run lint`, `npm run build` pass. Full local Edge38/38 (16 original +17 expansion +5 follow-up). Five quota/retry repetitions pass. New tests inspect interior cable text pixels and decode mirrored QR, all four tool-table headers at1280/650/390px, footer/license/theme/forced-colour behavior, protected populated IDs and two generated batches with undo, and a20k serial selection that changes only2001..4000 while neighbouring rows remain untouched and Undo restores them. Bounds negative tests include over-cap, zero, fractional, NaN, Infinity and noncontiguous selections.
+
+Failures retained: new Pattern exact selector included token help, corrected only in the new test; first full37/38 exposed existing saved/loading status race, fixed in source without weakening the quota test. Final suite has zero failed/suppressed tests. Dedicated review findings closed; audit0 across292 graph dependencies, secret scan0, no tracked artifacts. Final JS894.36kB/315.70kB gzip; existing Vite warning retained. No physical wrap/printer or Firefox/Safari validation; visible transformation tables remain bounded to first200 results (use Preview count200 or less to inspect a whole batch). Larger processed serial previews remain capped2000; IDs5000.
+
+Follow-up outside required work: bundle splitting, physical/cross-browser validation, receiver ingestion and unique20k PDF benchmarking, supported ESLint migration. No production merge/deployment performed. **Implementation confidence:94% /100** for this follow-up; browser automation and real canvas/batch checks are strong, with hardware and other browser engines still unverified.

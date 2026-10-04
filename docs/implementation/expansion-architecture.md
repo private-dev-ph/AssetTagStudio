@@ -2,7 +2,7 @@
 
 ## Scope and repository boundary
 
-All12features from the owner's supplied plan are requested. Integrate only on local `feature-expansion`, based on main3450713. Main and hosting stay untouched. No publishing or remote tests. Independent feature branches/worktrees start from the merged foundation and are deliberately integrated in dependency order.
+All12features from the owner's supplied plan are requested. Integrate on `feature-expansion`, based on main3450713. Main and production hosting stay untouched; tests remain local. Owner later authorized pushing the completed branch to GitHub; this does not authorize a main merge or production deployment. Independent feature branches/worktrees start from the merged foundation and are deliberately integrated in dependency order.
 
 ## Shared interfaces
 
