@@ -1,10 +1,10 @@
 import { DEFAULT_PAGE, DEFAULT_TEMPLATE, type LabelTemplate, type PageSettings } from '../../types';
 
 export type Theme = 'light' | 'dark';
-export type Preferences = { theme: Theme; unit: 'mm' | 'in'; template: LabelTemplate; page: PageSettings };
+export type Preferences = { theme: Theme; unit: 'mm' | 'in'; template: LabelTemplate; page: PageSettings; hiddenFields: string[] };
 
 export const PREFERENCES_KEY = 'asset-tag-studio.preferences.v1';
-export const DEFAULT_PREFERENCES: Preferences = { theme: 'light', unit: 'mm', template: DEFAULT_TEMPLATE, page: DEFAULT_PAGE };
+export const DEFAULT_PREFERENCES: Preferences = { theme: 'light', unit: 'mm', template: DEFAULT_TEMPLATE, page: DEFAULT_PAGE, hiddenFields: [] };
 
 function finite(value: unknown, min: number, max: number): value is number { return typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max; }
 function readTemplate(value: unknown): LabelTemplate {
@@ -55,6 +55,7 @@ export function parsePreferences(raw: string | null): Preferences {
       unit: candidate.unit === 'in' || candidate.unit === 'mm' ? candidate.unit : DEFAULT_PREFERENCES.unit,
       template: readTemplate(candidate.template),
       page: readPage(candidate.page),
+      hiddenFields: Array.isArray(candidate.hiddenFields) ? candidate.hiddenFields.slice(0, 6).filter((field): field is string => typeof field === 'string').map((field) => field.slice(0, 200)) : [],
     };
   } catch {
     return { ...DEFAULT_PREFERENCES };

@@ -17,6 +17,7 @@ describe('local preferences', () => {
       ...DEFAULT_PREFERENCES,
       template: { ...DEFAULT_PREFERENCES.template, widthMm: 80, code: { ...DEFAULT_PREFERENCES.template.code, field: 'Asset ID', payload: 'https://inventory.test/{Asset ID}', barcodeScale: 1.6 } },
       page: { ...DEFAULT_PREFERENCES.page, preset: 'Custom' as const, widthMm: 300 },
+      hiddenFields: ['Location'],
     };
     expect(parsePreferences(JSON.stringify(value))).toEqual(value);
   });
