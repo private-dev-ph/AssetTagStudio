@@ -12,6 +12,8 @@ import type { PrintJob } from './core/printJob';
 import type { StudioPageProps, StudioView } from './studio/contracts';
 import { NAVIGATION, checkTemplateMapping, estimateSnapshot, transformedWorkspace, viewFromHash, type WorkspaceSnapshot } from './studio/workspace';
 import { PayloadPage } from './studio/pages/PayloadPage';
+import { TemplatesPage } from './studio/pages/TemplatesPage';
+import { InspectorPage } from './studio/pages/InspectorPage';
 import { ToolFrame } from './studio/ui';
 import './styles.css';
 
@@ -308,7 +310,7 @@ function App() {
       {view !== 'asset-labels' && error && <p role="alert" className="alert error-alert">{error}</p>}
       {progress !== null && view !== 'asset-labels' && <div className="alert info-alert" role="status">Preparing PDF {progress}% <button className="secondary-button" onClick={() => exportController?.abort()}>Cancel export</button></div>}
       {exportError && view !== 'asset-labels' && <p role="alert" className="alert error-alert">{exportError}</p>}
-      {view === 'payload-builder' ? <PayloadPage {...studioProps} /> : view !== 'asset-labels' ? <ToolFrame title={NAVIGATION.flatMap(group => group.items).find(item => item.view === view)?.title ?? 'Studio'} description="This page is being integrated on the local expansion branch." ><p>The shared dataset and settings remain available in Asset labels.</p></ToolFrame> : <>
+      {view === 'templates' ? <TemplatesPage {...studioProps} /> : view === 'code-inspector' ? <InspectorPage {...studioProps} /> : view === 'payload-builder' ? <PayloadPage {...studioProps} /> : view !== 'asset-labels' ? <ToolFrame title={NAVIGATION.flatMap(group => group.items).find(item => item.view === view)?.title ?? 'Studio'} description="This page is being integrated on the local expansion branch." ><p>The shared dataset and settings remain available in Asset labels.</p></ToolFrame> : <>
       <section className="intro-row"><div><div className="eyebrow">LOCAL-FIRST LABEL WORKSPACE</div><h1>Turn your asset list into<br /><span>print-ready labels.</span></h1><p>Choose your data, make a label, then export a sheet you can print at actual size.</p></div><div className="step-track" aria-label="Workflow"><span className={dataset ? 'done' : 'active'}><i>1</i> Data</span><b /><span className={dataset ? 'active' : ''}><i>2</i> Design</span><b /><span><i>3</i> Export</span></div></section>
 
       {!dataset ? <section className={`welcome-card ${dragging ? 'dragging' : ''}`} onDragOver={(event) => { event.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={onDrop}>
