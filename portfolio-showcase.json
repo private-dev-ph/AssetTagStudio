@@ -1,25 +1,119 @@
 {
-  "name": "AssetTag Studio",
-  "summary": "A browser-native asset label generator that converts CSV and Excel inventory data into print-ready QR and Code 128 label sheets without uploading user data to a server.",
-  "stack": [
-    "React",
-    "TypeScript",
-    "Vite",
-    "Papa Parse",
-    "SheetJS",
-    "qrcode",
-    "JsBarcode",
-    "pdf-lib"
+  "title": "AssetTag Studio",
+  "summary": "A browser-native utility that turns CSV and Excel inventory into printable QR and Code 128 labels while keeping asset data on the user's device.",
+  "status": "production",
+  "internalDemoAvailable": true,
+  "liveDemoUrl": "https://tagstudio.zachcodes.dev",
+  "githubUrl": "https://github.com/private-dev-ph/AssetTagStudio",
+  "images": [
+    {
+      "src": "docs/media/workspace.png",
+      "alt": "AssetTag Studio workspace with imported inventory, a label editor and A4 sheet preview",
+      "caption": "Configure labels and page layout beside the imported inventory."
+    }
   ],
-  "features": [
-    "Local spreadsheet import",
-    "Structured label editor",
-    "Physical page layout",
-    "Multi-page PDF export"
+  "sections": [
+    { "type": "problemPurpose" },
+    {
+      "type": "image",
+      "title": "From inventory to printable labels",
+      "summary": "The recorded demo uses synthetic inventory and shows the import, label configuration, sheet preview and PDF workflow.",
+      "image": {
+        "src": "docs/media/demo.gif",
+        "alt": "Animated walkthrough of importing synthetic assets and configuring printable QR labels",
+        "caption": "A 9.6-second demonstration of the browser-local workflow."
+      }
+    },
+    { "type": "keyFeatures" },
+    {
+      "type": "carousel",
+      "title": "Workspace and output modes",
+      "summary": "QR and Code 128 labels, theme options and a responsive workspace.",
+      "autoPlay": false,
+      "images": [
+        {
+          "src": "docs/media/workspace.png",
+          "alt": "QR label editor and printable A4 sheet preview",
+          "caption": "Structured QR labels with physical page dimensions."
+        },
+        {
+          "src": "docs/media/barcode.png",
+          "alt": "Code 128 label preview with human-readable barcode text",
+          "caption": "Code 128 output for printable ASCII identifiers."
+        },
+        {
+          "src": "docs/media/dark-workspace.png",
+          "alt": "AssetTag Studio inventory and label workspace in dark theme",
+          "caption": "Dark theme with the same import and export workflow."
+        },
+        {
+          "src": "docs/media/mobile-workspace.png",
+          "alt": "AssetTag Studio workspace arranged for a narrow mobile screen",
+          "caption": "Responsive controls and bounded previews on smaller screens."
+        }
+      ]
+    },
+    { "type": "techStack" },
+    { "type": "role" },
+    { "type": "technicalHighlights" },
+    { "type": "challenges" },
+    { "type": "results" },
+    { "type": "lessons" }
   ],
-  "liveUrl": "https://tagstudio.zachcodes.dev",
-  "screenshot": "docs/media/workspace.png",
-  "demo": "docs/media/demo.gif",
-  "samplePdf": "docs/media/sample-labels.pdf",
-  "status": "Live MVP; Cloudflare Pages deployment and HTTPS verified"
+  "problem": "Equipment inventories already live in spreadsheets, but producing consistent physical labels often means copying identifiers into separate tools, guessing print dimensions or sending inventory to remote services.",
+  "purpose": "Create a focused, account-free utility for importing inventory, designing QR or barcode labels and exporting physically sized PDF sheets without uploading spreadsheet values.",
+  "keyFeatures": [
+    "Import CSV, XLSX and legacy XLS, choose a worksheet and review identifier/header diagnostics.",
+    "Search, sort, select and remove records without turning the workspace into a spreadsheet editor.",
+    "Generate QR codes from raw fields or payload templates, or printable ASCII Code 128 barcodes.",
+    "Configure label fields, ordering, prefixes, typography, dimensions, padding and borders.",
+    "Arrange labels on A4, Letter, A5 or custom pages with millimeter/inch inputs, margins and gaps.",
+    "Export multi-page PDFs with progress and cancellation; preview only a bounded subset of labels.",
+    "Use light/dark themes and remembered preferences while imported row values stay in memory."
+  ],
+  "techStack": [
+    "React", "TypeScript", "Vite", "Papa Parse", "SheetJS", "qrcode", "JsBarcode", "pdf-lib",
+    "Web Workers", "Vitest", "Playwright", "GitHub Actions", "Cloudflare Pages"
+  ],
+  "role": "Product scoping and end-to-end delivery across the browser-local architecture, spreadsheet import, label editor, rendering/layout engine, PDF generation, verification, documentation and deployment.",
+  "technicalHighlights": [
+    "Normalize CSV and Excel into a generic string-valued dataset, preserving leading zeroes and supporting arbitrary column names.",
+    "Parse in a module worker with cancellation, a deadline, input quotas and structural ZIP/CFB validation before opening Excel files.",
+    "Use millimeters as the canonical layout unit and share canvas rendering between preview and physically positioned PDF labels.",
+    "Validate QR module density, quiet zones, Code 128 character/width bounds and text fit before producing output.",
+    "Bound DOM previews and render caches, yield between export batches and release decoded PDF image channels promptly.",
+    "Keep runtime processing on the device, persist only permitted preferences and enforce static security headers."
+  ],
+  "challengesAndSolutions": [
+    {
+      "challenge": "Different spreadsheet formats, malformed workbooks and stale asynchronous imports could produce inconsistent or excessive parser work.",
+      "solution": "Use one normalization contract, worker lifecycle/generation guards, readable diagnostics and file/row/column/cell/archive bounds."
+    },
+    {
+      "challenge": "Preview appearance alone does not guarantee that PDF labels have the right dimensions or scannable codes.",
+      "solution": "Calculate layout in millimeters, share the label renderer, preserve code quiet zones and validate actual PDF page dimensions and QR decoding in browser tests. Physical printer/scanner calibration remains a separate hardware check."
+    },
+    {
+      "challenge": "Large PDF batches can retain decoded image memory and freeze the interface.",
+      "solution": "Embed PDF images promptly, bound caches/previews, yield between batches and offer cancellation. Repeated-label boundary exports are verified; large unique-label export performance remains device-dependent and unbenchmarked."
+    },
+    {
+      "challenge": "The custom hostname inherited a zone-wide Cloudflare analytics injection despite the app having no telemetry code.",
+      "solution": "Add a hostname-scoped Disable RUM rule and rerun hosted network/privacy tests while leaving the main portfolio's analytics intact."
+    }
+  ],
+  "resultsImpact": [
+    "Deployed an account-free static application at tagstudio.zachcodes.dev with no backend or inventory upload API.",
+    "Verified 100 unit tests, including 36 synthetic sample-pack checks; the production browser suite has 16 passing scenarios in local Edge, CI Chromium and hosted Edge verification.",
+    "Verified a complete 834-page PDF from 20,000 repeated labels with the standard A4 layout; this is not a benchmark for 20,000 unique labels.",
+    "Provided a 30-file synthetic test pack, production screenshots, a 9.6-second demo and an 11-page A4 sample PDF containing 245 invented assets.",
+    "Preserved the privacy boundary with request/storage checks, constrained input/rendering paths and verified live security headers."
+  ],
+  "lessonsLearned": [
+    "A shared data and rendering contract reduces differences between imported formats, previews and exported output.",
+    "Import acceptance and renderability are different boundaries: a valid spreadsheet cell may still be too long or dense for a printable label.",
+    "Hosting defaults need verification too; analytics injection can originate outside application source.",
+    "Repeated-label stress tests benefit from caching and must not be presented as evidence for equally sized unique-label workloads.",
+    "A small structured editor and static deployment keep the product focused and maintainable; named templates, extra code formats and printer profiles can follow measured user needs."
+  ]
 }
