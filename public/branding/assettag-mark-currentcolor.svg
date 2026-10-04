@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">AssetTag Studio QR mark</title>
+  <desc id="desc">A tag-shaped capital A with square QR finder openings and small data modules.</desc>
+  <g id="mark" fill="currentColor">
+    <path fill-rule="evenodd" d="M111 20H156L230 94V123L188 224H145L158 187H96L82 224H37Z M106 114H150V158H106Z M164 74H192V102H164Z M112 58H122V68H112Z M132 78H142V88H132Z M162 126H172V136H162Z"/>
+    <path d="M118 126H138V146H118Z M172 82H184V94H172Z"/>
+  </g>
+</svg>

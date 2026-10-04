@@ -1,5 +1,9 @@
 # AssetTag Studio
 
+<img src="public/branding/assettag-logo-horizontal.svg" alt="AssetTag Studio — QR-inspired A/tag logo" width="440" />
+
+[Brand assets and regeneration guide](docs/branding.md)
+
 Turn spreadsheet inventory into print-ready QR and Code 128 labels, entirely in your browser.
 
 [Live demo](https://tagstudio.zachcodes.dev) · [Cloudflare Pages mirror](https://tagstudio.pages.dev)

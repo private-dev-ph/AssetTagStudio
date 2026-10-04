@@ -243,7 +243,7 @@ function App() {
 
   return <div className="app-shell">
     <header className="topbar">
-      <a className="brand" href="#top" aria-label="AssetTag Studio home"><span className="brand-mark">A</span><span>AssetTag <b>Studio</b></span></a>
+      <a className="brand" href="#top" aria-label="AssetTag Studio home"><span className="brand-mark" aria-hidden="true" /><span>AssetTag <b>Studio</b></span></a>
       <div className="topbar-actions">
         {dataset && <span className="privacy-note"><span className="status-dot" /> Files stay on this device</span>}
         <button className="icon-button" aria-label={`Switch to ${preferences.theme === 'light' ? 'dark' : 'light'} theme`} onClick={() => setPreferences((value) => ({ ...value, theme: value.theme === 'light' ? 'dark' : 'light' }))}>{preferences.theme === 'light' ? '◐' : '☼'}</button>

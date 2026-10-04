@@ -5,6 +5,10 @@
   "internalDemoAvailable": true,
   "liveDemoUrl": "https://tagstudio.zachcodes.dev",
   "githubUrl": "https://github.com/private-dev-ph/AssetTagStudio",
+  "logo": {
+    "src": "public/branding/assettag-logo.png",
+    "alt": "AssetTag Studio logo: a white tag-shaped A with square QR finder motifs on teal"
+  },
   "images": [
     {
       "src": "docs/media/workspace.png",
