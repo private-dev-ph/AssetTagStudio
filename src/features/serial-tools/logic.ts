@@ -6,6 +6,13 @@ export type SerialPreviewRow = { rowId: string; before: string; after: string; s
 const MAX_ROWS = 2000;
 const MAX_SERIAL_CHARS = 500;
 
+export class PreviewGeneration {
+  private generation = 0;
+  begin(): number { this.generation += 1; return this.generation; }
+  invalidate(): void { this.generation += 1; }
+  isCurrent(generation: number): boolean { return generation === this.generation; }
+}
+
 function validatePattern(source: string): void {
   if (source.length > 120) throw new Error('Validation pattern must be 120 characters or fewer.');
   if (/\\[1-9]|\(\?[=!<]|\([^)]*[+*][^)]*\)[+*{]|(?:\*|\+|\{\d+,?\d*\})\s*(?:\*|\+|\{)/.test(source)) throw new Error('Pattern uses a construct that can take too long to validate. Simplify it before applying.');

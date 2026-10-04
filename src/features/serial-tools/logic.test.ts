@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Dataset } from '../../types';
-import { applySerialPreview, previewSerials, testSerialPattern } from './logic';
+import { applySerialPreview, PreviewGeneration, previewSerials, testSerialPattern } from './logic';
 
 const dataset: Dataset = { columns: ['Serial'], warnings: [], records: [
   { id: 'a', values: { Serial: ' sn: czc-91237 ' } }, { id: 'b', values: { Serial: 'CZC91237' } }, { id: 'c', values: { Serial: 'CC10042' } },
@@ -43,5 +43,16 @@ describe('serial pattern worker', () => {
     await vi.advanceTimersByTimeAsync(101);
     await rejected;
     expect(terminate).toHaveBeenCalledOnce();
+  });
+});
+
+describe('serial preview request generation', () => {
+  it('invalidates results after settings or selection changes', () => {
+    const requests = new PreviewGeneration();
+    const stale = requests.begin();
+    requests.invalidate();
+    expect(requests.isCurrent(stale)).toBe(false);
+    const current = requests.begin();
+    expect(requests.isCurrent(current)).toBe(true);
   });
 });
