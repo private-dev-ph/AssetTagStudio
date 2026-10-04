@@ -64,6 +64,8 @@ npm audit
 
 CI is configured for pull requests and pushes to main or web-deployment. Read [implementation progress](docs/implementation/progress.md) for verification status.
 
+For manual testing, `npm run samples` generates a synthetic CSV/Excel pack with 100–20,000 rows, exact import boundaries and intentional validation failures. See the [test-data guide](docs/test-data/README.md); `npm run test:samples` verifies its documented import results.
+
 ## Deployment
 
 Vite builds static dist files for Cloudflare Pages. No runtime environment secrets required. [Setup, headers and acceptance checks](docs/deployment.md).
@@ -75,6 +77,8 @@ Imported files and rendered codes have documented resource limits. Compressed Ex
 ## Future work
 
 Saved templates, logo/image fields, additional symbologies, printer profiles, offline installation and FieldLens presets are intentionally outside the MVP.
+
+The [post-MVP roadmap](docs/roadmap.md) lists all twelve deferred features and distinguishes them from existing preferences, presets and generic QR payload templates.
 
 ## License
 
