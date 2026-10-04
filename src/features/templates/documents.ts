@@ -54,6 +54,9 @@ function parseTemplate(value: unknown): LabelTemplate {
   if (!['qr', 'code128', 'none'].includes(String(codeInput.type))) throw new Error('template.code.type is unsupported.');
   if (!['top', 'bottom'].includes(String(codeInput.barcodeTextPosition))) throw new Error('template.code.barcodeTextPosition is unsupported.');
   if (codeInput.payloadMode !== undefined && !['text', 'url', 'fieldlens', 'location'].includes(String(codeInput.payloadMode))) throw new Error('template.code.payloadMode is unsupported.');
+  const widthMm = boundedNumber(input.widthMm, 'template.widthMm', 10, 200);
+  const heightMm = boundedNumber(input.heightMm, 'template.heightMm', 10, 200);
+  const paddingMm = boundedNumber(input.paddingMm, 'template.paddingMm', 0, Math.min(widthMm, heightMm) / 3);
   const fieldsInput = input.fields;
   if (!Array.isArray(fieldsInput) || fieldsInput.length > 6) throw new Error('template.fields must contain at most 6 fields.');
   const fields = fieldsInput.map((candidate, index) => {
@@ -66,18 +69,29 @@ function parseTemplate(value: unknown): LabelTemplate {
       bold: boolean(field.bold, `template.fields[${index}].bold`),
     };
   });
+  const codeType = codeInput.type as LabelTemplate['code']['type'];
+  const codeField = boundedString(codeInput.field, 'template.code.field', 200);
+  if (codeType !== 'none' && !codeField.trim()) throw new Error('template.code.field must name a column when a code is enabled.');
+  const sizeMm = boundedNumber(codeInput.sizeMm, 'template.code.sizeMm', 0, 100);
+  const barcodeHeightMm = boundedNumber(codeInput.barcodeHeightMm, 'template.code.barcodeHeightMm', 0, 100);
+  if (codeType === 'qr' && (sizeMm < 8 || sizeMm > Math.min(widthMm, heightMm))) throw new Error(`template.code.sizeMm must be from 8 to ${Math.min(widthMm, heightMm)} for a QR code.`);
+  if (codeType === 'code128' && (barcodeHeightMm < 5 || barcodeHeightMm > Math.min(40, heightMm))) throw new Error(`template.code.barcodeHeightMm must be from 5 to ${Math.min(40, heightMm)} for Code 128.`);
+  const payload = boundedString(codeInput.payload, 'template.code.payload', 2000);
+  if (/[{}]/.test(payload.replace(/\{([^{}]+)\}/g, '')) || [...payload.matchAll(/\{([^{}]+)\}/g)].some((match) => !match[1]?.trim())) {
+    throw new Error('template.code.payload must use complete, non-empty {columnName} placeholders.');
+  }
   const result: LabelTemplate = {
-    widthMm: boundedNumber(input.widthMm, 'template.widthMm', 10, 200),
-    heightMm: boundedNumber(input.heightMm, 'template.heightMm', 10, 200),
-    paddingMm: boundedNumber(input.paddingMm, 'template.paddingMm', 0, 30),
+    widthMm,
+    heightMm,
+    paddingMm,
     border: boolean(input.border, 'template.border'),
     alignment: alignment as LabelTemplate['alignment'],
     code: {
-      type: codeInput.type as LabelTemplate['code']['type'],
-      field: boundedString(codeInput.field, 'template.code.field', 200),
-      sizeMm: boundedNumber(codeInput.sizeMm, 'template.code.sizeMm', 0, 100),
-      payload: boundedString(codeInput.payload, 'template.code.payload', 2000),
-      barcodeHeightMm: boundedNumber(codeInput.barcodeHeightMm, 'template.code.barcodeHeightMm', 0, 100),
+      type: codeType,
+      field: codeField,
+      sizeMm,
+      payload,
+      barcodeHeightMm,
       barcodeText: boolean(codeInput.barcodeText, 'template.code.barcodeText'),
       barcodeTextPosition: codeInput.barcodeTextPosition as 'top' | 'bottom',
       ...(codeInput.barcodeScale === undefined ? {} : { barcodeScale: boundedNumber(codeInput.barcodeScale, 'template.code.barcodeScale', 0.8, 3) }),
@@ -107,6 +121,8 @@ function parsePage(value: unknown): PageSettings {
     ...(input.offsetXMm === undefined ? {} : { offsetXMm: boundedNumber(input.offsetXMm, 'page.offsetXMm', -50, 50) }),
     ...(input.offsetYMm === undefined ? {} : { offsetYMm: boundedNumber(input.offsetYMm, 'page.offsetYMm', -50, 50) }),
   };
+  if (result.marginLeftMm + result.marginRightMm >= result.widthMm) throw new Error('page left and right margins must leave room for labels.');
+  if (result.marginTopMm + result.marginBottomMm >= result.heightMm) throw new Error('page top and bottom margins must leave room for labels.');
   return result;
 }
 
@@ -140,16 +156,20 @@ export type TemplateFieldMapping = { template: LabelTemplate; missing: string[] 
 
 /** Maps every imported field reference explicitly; unknown references remain visible as missing. */
 export function mapTemplateFields(template: LabelTemplate, columns: readonly string[], mapping: Record<string, string>): TemplateFieldMapping {
-  const references = new Set([template.code.field, ...template.fields.map((field) => field.source), ...[...template.code.payload.matchAll(/\{([^{}]+)\}/g)].map((match) => match[1])].filter(Boolean));
-  const missing = [...references].filter((reference) => !columns.includes(mapping[reference] || reference));
+  const references = new Set([...(template.code.type === 'none' ? [] : [template.code.field]), ...template.fields.map((field) => field.source), ...[...template.code.payload.matchAll(/\{([^{}]+)\}/g)].map((match) => match[1])].filter(Boolean));
+  const mappedReference = (reference: string) => {
+    const value = Object.hasOwn(mapping, reference) ? mapping[reference] : undefined;
+    return typeof value === 'string' && value ? value : reference;
+  };
+  const missing = [...references].filter((reference) => !columns.includes(mappedReference(reference)));
   const mapped: LabelTemplate = {
     ...template,
     code: {
       ...template.code,
-      field: template.code.field ? mapping[template.code.field] || template.code.field : '',
-    payload: template.code.payload.replace(/\{([^{}]+)\}/g, (_token, field: string) => `{${mapping[field] || field}}`),
+      field: template.code.field ? mappedReference(template.code.field) : '',
+      payload: template.code.payload.replace(/\{([^{}]+)\}/g, (_token, field: string) => `{${mappedReference(field)}}`),
     },
-    fields: template.fields.map((field) => ({ ...field, source: mapping[field.source] || field.source })),
+    fields: template.fields.map((field) => ({ ...field, source: mappedReference(field.source) })),
   };
   return { template: mapped, missing };
 }

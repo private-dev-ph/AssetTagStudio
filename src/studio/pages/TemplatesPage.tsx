@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { LabelTemplate, PageSettings } from '../../types';
 import { DEFAULT_TEMPLATE } from '../../types';
-import { deleteEntry, listEntries, putEntry, type LibraryEntry } from '../../features/storage/library';
+import { clearEntries, deleteEntry, listEntries, putEntry, type LibraryEntry } from '../../features/storage/library';
 import { mapTemplateFields, parseTemplateDocument, serializeTemplateDocument, type TemplateDocument } from '../../features/templates/documents';
 import type { StudioPageProps } from '../contracts';
 import { ColumnSelect, NoDataset, ToolFrame } from '../ui';
@@ -34,14 +34,20 @@ export const BUILT_IN_TEMPLATES: Preset[] = [
     { source: 'Bin Code', label: '', fontSize: 14, bold: true },
     { source: 'Zone', label: 'Zone', fontSize: 8, bold: false },
   ]),
-  preset('Location', { widthMm: 50, heightMm: 25, mode: 'location', alignment: 'center' }, { type: 'qr', field: 'Location Code', payloadMode: 'location' }, [
+  preset('Location', { widthMm: 50, heightMm: 25, mode: 'location', alignment: 'center' }, { type: 'qr', field: 'Location Code', payload: 'location://{Location Code}', payloadMode: 'location' }, [
     { source: 'Location Name', label: '', fontSize: 10, bold: true },
     { source: 'Location Code', label: 'Code', fontSize: 8, bold: false },
   ]),
 ];
 
 function references(template: LabelTemplate): string[] {
-  return [...new Set([...(template.code.field ? [template.code.field] : []), ...template.fields.map((field) => field.source), ...[...template.code.payload.matchAll(/\{([^{}]+)\}/g)].map((match) => match[1])])];
+  return [...new Set([...(template.code.type !== 'none' && template.code.field ? [template.code.field] : []), ...template.fields.map((field) => field.source), ...[...template.code.payload.matchAll(/\{([^{}]+)\}/g)].map((match) => match[1])])];
+}
+
+function setFieldMapping(current: Record<string, string>, source: string, value: string): Record<string, string> {
+  const next = Object.assign(Object.create(null) as Record<string, string>, current);
+  next[source] = value;
+  return next;
 }
 
 function makeId(): string {
@@ -67,6 +73,8 @@ export function TemplatesPage({ dataset, template, page, busy, onApplyTemplate, 
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const datasetColumns = dataset?.columns ?? [];
   const refs = useMemo(() => selected ? references(selected.template) : [], [selected]);
@@ -78,8 +86,9 @@ export function TemplatesPage({ dataset, template, page, busy, onApplyTemplate, 
     try {
       const next = await listEntries('templates');
       setEntries(next);
+      setLoadFailed(false);
       if (selectedId && !next.some((entry) => entry.id === selectedId)) setSelectedId('');
-    } catch (reason) { setError(reason instanceof Error ? reason.message : 'Saved templates could not be loaded.'); }
+    } catch (reason) { setEntries([]); setLoadFailed(true); setError(reason instanceof Error ? reason.message : 'Saved templates could not be loaded.'); }
     finally { setLoading(false); }
   }
 
@@ -87,7 +96,7 @@ export function TemplatesPage({ dataset, template, page, busy, onApplyTemplate, 
 
   function selectDocument(document: TemplateDocument, id = '') {
     setSelected(document); setSelectedId(id); setNewName(document.name); setError(''); setNotice('');
-    const nextMap: Record<string, string> = {};
+    const nextMap = Object.create(null) as Record<string, string>;
     for (const source of references(document.template)) nextMap[source] = datasetColumns.includes(source) ? source : '';
     setFieldMap(nextMap);
   }
@@ -109,9 +118,10 @@ export function TemplatesPage({ dataset, template, page, busy, onApplyTemplate, 
   function applySelected() {
     if (!selected || !mapped) return;
     if (mapped.missing.length) { setError(`Map every template field before applying: ${mapped.missing.join(', ')}.`); return; }
-    setError('');
-    onApplyTemplate(mapped.template, selected.page, selected.name);
-    setNotice(`${selected.name} applied to the current dataset.`);
+    try {
+      onApplyTemplate(mapped.template, selected.page, selected.name);
+      setError(''); setNotice(`${selected.name} applied to the current dataset.`);
+    } catch (reason) { setError(reason instanceof Error ? reason.message : 'This template could not be applied. Check its label and page settings.'); }
   }
 
   async function saveCurrent() {
@@ -137,6 +147,29 @@ export function TemplatesPage({ dataset, template, page, busy, onApplyTemplate, 
     } catch (reason) { setError(reason instanceof Error ? reason.message : 'Template could not be duplicated.'); }
   }
 
+  async function renameSavedEntry() {
+    if (!selected || !selectedId) return;
+    const name = newName.trim();
+    if (!name || name.length > 100) { setError('Enter a template name from 1 to 100 characters.'); return; }
+    try {
+      const json = serializeTemplateDocument(name, selected.template, selected.page);
+      await putEntry('templates', { id: selectedId, name, json });
+      setSelected({ ...selected, name });
+      await refresh(); setError(''); setNotice('Saved template renamed. Its label and page settings were preserved.');
+    } catch (reason) { setError(reason instanceof Error ? reason.message : 'Saved template could not be renamed.'); }
+  }
+
+  async function resetTemplateLibrary() {
+    setResetting(true);
+    try {
+      await clearEntries('templates');
+      setEntries([]); setSelected(null); setSelectedId(''); setLoadFailed(false); setError('');
+      setNotice('Saved template library cleared.');
+      await refresh();
+    } catch (reason) { setError(reason instanceof Error ? reason.message : 'Saved template library could not be cleared.'); }
+    finally { setResetting(false); }
+  }
+
   async function removeEntry(entry: LibraryEntry) {
     try {
       await deleteEntry('templates', entry.id);
@@ -145,10 +178,13 @@ export function TemplatesPage({ dataset, template, page, busy, onApplyTemplate, 
     } catch (reason) { setError(reason instanceof Error ? reason.message : 'Template could not be deleted.'); }
   }
 
-  if (!dataset) return <ToolFrame title="Templates" description="Save, import, and apply reusable label and page settings."><NoDataset onImport={() => onNavigate('asset-labels')} /></ToolFrame>;
+  if (!dataset) return <ToolFrame title="Templates" description="Save, import, and apply reusable label and page settings.">
+    {error && <div className="alert error-alert" role="alert">{error}{loadFailed && <button className="secondary-button" disabled={loading || resetting} onClick={() => void resetTemplateLibrary()}>{resetting ? 'Resetting…' : 'Clear saved templates and retry'}</button>}</div>}
+    <NoDataset onImport={() => onNavigate('asset-labels')} />
+  </ToolFrame>;
 
   return <ToolFrame title="Templates" description="Save reusable label and page settings. Map every field to this dataset before applying a template.">
-    {(error || notice) && <div className={`alert ${error ? 'error-alert' : 'success-alert'}`} role={error ? 'alert' : 'status'}>{error || notice}</div>}
+    {(error || notice) && <div className={`alert ${error ? 'error-alert' : 'success-alert'}`} role={error ? 'alert' : 'status'}>{error || notice}{loadFailed && <button className="secondary-button" disabled={disabled || resetting} onClick={() => void resetTemplateLibrary()}>{resetting ? 'Resetting…' : 'Clear saved templates and retry'}</button>}</div>}
     <div className="tool-grid">
       <section className="tool-card">
         <h2>Built-in templates</h2>
@@ -167,7 +203,7 @@ export function TemplatesPage({ dataset, template, page, busy, onApplyTemplate, 
       {selected && <section className="tool-card">
         <h2>Map and apply: {selected.name}</h2>
         <p>Each source field must point to a column in the current dataset. Imported field references are kept until you choose a mapping.</p>
-        {refs.length ? <div className="tool-grid">{refs.map((source) => <ColumnSelect key={source} label={source} dataset={dataset} value={fieldMap[source] ?? ''} optional onChange={(value) => setFieldMap((current) => ({ ...current, [source]: value }))} disabled={disabled} />)}</div> : <p>This template has no dataset field references.</p>}
+        {refs.length ? <div className="tool-grid">{refs.map((source) => <ColumnSelect key={source} label={source} dataset={dataset} value={fieldMap[source] ?? ''} optional onChange={(value) => setFieldMap((current) => setFieldMapping(current, source, value))} disabled={disabled} />)}</div> : <p>This template has no dataset field references.</p>}
         {mapped?.missing.length ? <p className="diagnostic-warning" role="status">Needs mapping: {mapped.missing.join(', ')}</p> : <p className="diagnostic-ok">All template fields are mapped.</p>}
         <div className="tool-row"><button className="primary-button" disabled={disabled || Boolean(mapped?.missing.length)} onClick={applySelected}>Apply template</button><button className="secondary-button" disabled={disabled} onClick={() => { try { downloadDocument(selected.name, mapped?.template ?? selected.template, selected.page); } catch (reason) { setError(reason instanceof Error ? reason.message : 'Template export failed.'); } }}>Export JSON</button></div>
       </section>}
@@ -175,7 +211,7 @@ export function TemplatesPage({ dataset, template, page, busy, onApplyTemplate, 
         <h2>Save current settings</h2>
         <p>Only label and page settings are saved. Dataset rows stay in the current browser session.</p>
         <label className="tool-control">Template name<input value={newName} maxLength={100} onChange={(event) => setNewName(event.target.value)} placeholder="e.g. Receiving labels" disabled={disabled} /></label>
-        <div className="tool-row"><button className="primary-button" disabled={disabled} onClick={() => void saveCurrent()}>{selectedId ? 'Update saved template' : 'Save current settings'}</button>{selectedId && <button className="secondary-button" disabled={disabled} onClick={() => { setSelectedId(''); setNewName(`${newName} copy`.slice(0, 100)); }}>Save as a copy</button>}</div>
+        <div className="tool-row"><button className="primary-button" disabled={disabled} onClick={() => void saveCurrent()}>{selectedId ? 'Replace saved settings with current settings' : 'Save current settings'}</button>{selectedId && <><button className="secondary-button" disabled={disabled} onClick={() => void renameSavedEntry()}>Rename saved template</button><button className="secondary-button" disabled={disabled} onClick={() => { setSelectedId(''); setNewName(`${newName} copy`.slice(0, 100)); }}>Save current settings as a copy</button></>}</div>
       </section>
     </div>
   </ToolFrame>;

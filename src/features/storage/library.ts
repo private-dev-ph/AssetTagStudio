@@ -115,3 +115,8 @@ export async function deleteEntry(store: LibraryStore, id: string): Promise<void
   if (typeof id !== 'string' || !id) throw new Error('Choose a saved item to delete.');
   await runTransaction(store, 'readwrite', (objectStore) => objectStore.delete(id), 'Saved item could not be deleted from browser storage.');
 }
+
+export async function clearEntries(store: LibraryStore): Promise<void> {
+  validateStore(store);
+  await runTransaction(store, 'readwrite', (objectStore) => objectStore.clear(), 'Saved library could not be cleared from browser storage.');
+}
