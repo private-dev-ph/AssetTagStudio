@@ -16,11 +16,11 @@ export function previewIds(dataset: Dataset, options: IdGeneratorOptions): IdPre
   const targets = dataset.records.filter(record => selected.has(record.id) && (!options.blankOnly || !readValue(record, options.column).trim()) && (options.overwrite || !readValue(record, options.column).trim()));
   if (targets.length > MAX_PREVIEW) throw new Error(`Select no more than ${MAX_PREVIEW} rows for a preview.`);
   const targetIds = new Set(targets.map(row => row.id));
-  const existing = new Map<string, string[]>();
+  const existing = new Set<string>();
   for (const record of dataset.records) {
     if (targetIds.has(record.id)) continue;
     const value = readValue(record, options.column).trim();
-    if (value) existing.set(value, [...(existing.get(value) ?? []), record.id]);
+    if (value) existing.add(value);
   }
   const generated = new Set<string>();
   return targets.map((record, index) => {

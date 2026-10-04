@@ -14,9 +14,15 @@ export function auditDataset(dataset: Dataset, idField = '', serialField = '', n
   const findings: HealthFinding[] = [];
   const duplicates = (field: string, code: string, label: string) => {
     if (!dataset.columns.includes(field)) return;
-    const groups = new Map<string, string[]>();
-    for (const row of dataset.records) { const value = readValue(row, field).trim(); if (value) groups.set(value, [...(groups.get(value) ?? []), row.id]); }
-    for (const [value, ids] of groups) if (ids.length > 1) addBounded(findings, { code, severity: 'error', column: field, rowIds: ids.slice(0, 20), message: `${ids.length} rows share ${label} “${value}”.` });
+    const groups = new Map<string, { count: number; rowIds: string[] }>();
+    for (const row of dataset.records) {
+      const value = readValue(row, field).trim();
+      if (!value) continue;
+      const group = groups.get(value);
+      if (group) { group.count += 1; if (group.rowIds.length < 20) group.rowIds.push(row.id); }
+      else groups.set(value, { count: 1, rowIds: [row.id] });
+    }
+    for (const [value, group] of groups) if (group.count > 1) addBounded(findings, { code, severity: 'error', column: field, rowIds: group.rowIds, message: `${group.count} rows share ${label} “${value}”.` });
   };
   duplicates(idField, 'duplicate-id', 'identifier'); duplicates(serialField, 'duplicate-serial', 'serial number');
   for (const row of dataset.records) {

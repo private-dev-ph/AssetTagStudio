@@ -30,4 +30,13 @@ describe('data health', () => {
     expect(() => previewHealthFix({ ...dataset, records: dataset.records.map(row => ({ ...row, values: { 'Asset ID': '', Serial: '', Name: '', Empty: '' } })) }, 'empty-columns')).toThrow(/At least one column/);
     expect(() => previewHealthFix({ ...dataset, columns: [' a ', 'a'], records: dataset.records.map(row => ({ ...row, values: { ...row.values, ' a ': '', a: '' } })) }, 'headers')).toThrow(/duplicate names/);
   });
+  it('counts large duplicate groups while retaining at most twenty row references', () => {
+    const manyRows: Dataset = {
+      columns: ['ID'], warnings: [],
+      records: Array.from({ length: 20_000 }, (_, index) => ({ id: `row-${index + 1}`, values: { ID: 'duplicate' } })),
+    };
+    const finding = auditDataset(manyRows, 'ID').find(item => item.code === 'duplicate-id');
+    expect(finding?.message).toContain('20000 rows');
+    expect(finding?.rowIds).toEqual(Array.from({ length: 20 }, (_, index) => `row-${index + 1}`));
+  });
 });
