@@ -1,0 +1,11 @@
+# Label layout and rendering
+
+All label and page dimensions are millimeters. `calculateLayout` validates the template and page, then returns row-major label origins measured from the top-left page edge. Margins and gaps are applied before counting full labels; labels are never scaled to fit. It rejects non-finite, negative, oversized, and zero-fit inputs with a repair hint. A request may contain at most 20,000 records.
+
+The default label is 60 × 30 mm with 2 mm padding and a 20 mm QR code at the left. Selected text fields are stacked in the space to the right. For Code 128, the barcode spans the available label width, its optional value text sits above or below it, and selected fields follow below. The barcode scale changes module width from 0.25 mm at scale 1 (the canvas uses 8 px/mm); it accepts 0.8–3 and fails with a width hint instead of silently shrinking bars. Labels are rendered as one PNG by browser canvas and that exact raster is embedded in the PDF.
+
+`fontSize` is points. Text wraps at word boundaries, then at character boundaries for long unbroken values. If wrapped text cannot fit, rendering reports the field and suggests shortening its value, reducing the font, or giving it more area. QR rendering reserves four quiet-zone modules on every edge and rejects codes whose modules would be smaller than 0.2 mm. Code 128 reserves ten barcode modules at both horizontal edges and accepts printable ASCII values only. For dense QR payloads, shorten the payload or increase QR size; for wide barcodes, shorten the value or increase label width.
+
+Payloads are either a raw selected column value (`payload` empty) or a template string such as `Asset: {Asset ID}`. Braced names must match a record column exactly, including spaces and punctuation. Unknown placeholders, missing code values, empty output, and values over 2,000 characters fail before the code is rendered. The chosen `code.field` is used for raw payloads; it need not appear in the template payload.
+
+Canvas allocation is bounded to 1,800 px per edge, text fields to 32, font sizes to 5–48 pt, labels to 10–200 mm, and record count to 20,000. Browser tests should cover actual QR/barcode decoding and canvas output; pure validation and layout helpers can run in Node.
