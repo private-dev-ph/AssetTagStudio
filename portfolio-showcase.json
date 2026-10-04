@@ -1,0 +1,25 @@
+{
+  "name": "AssetTag Studio",
+  "summary": "A browser-native asset label generator that converts CSV and Excel inventory data into print-ready QR and Code 128 label sheets without uploading user data to a server.",
+  "stack": [
+    "React",
+    "TypeScript",
+    "Vite",
+    "Papa Parse",
+    "SheetJS",
+    "qrcode",
+    "JsBarcode",
+    "pdf-lib"
+  ],
+  "features": [
+    "Local spreadsheet import",
+    "Structured label editor",
+    "Physical page layout",
+    "Multi-page PDF export"
+  ],
+  "liveUrl": null,
+  "screenshot": "docs/media/workspace.png",
+  "demo": "docs/media/demo.gif",
+  "samplePdf": "docs/media/sample-labels.pdf",
+  "status": "MVP verified locally; live deployment pending"
+}
