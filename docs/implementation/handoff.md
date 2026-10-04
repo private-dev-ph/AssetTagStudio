@@ -3,23 +3,23 @@
 ## Repository state
 - Repository: C:/Users/Administrator/Documents/Github/AssetTagStudio
 - Starting main, current main and origin/main: 27d0582aae742990d2c25c0ef752896ac420becd. No implementation was committed to main.
-- Current branch: web-deployment. Integrated implementation checkpoint: 95cac68. The exact current branch/documentation SHA is obtained with `git rev-parse HEAD`; integration SHA with `git rev-parse web-deployment`.
+- Current branch: web-deployment. Final tested application/deployment SHA: 372d90ff048a7bd3f5f6b173000f14fac6fe026b. Documentation checkpoint at generation: 3ee50d4; the final documentation tip is recorded in the final report. The exact current branch/documentation SHA is obtained with `git rev-parse HEAD`; integration SHA with `git rev-parse web-deployment`.
 - All nine feature branches are ancestors of web-deployment. No required code is stranded on an outstanding branch.
-- No remote push or live deployment yet. Final integrated verification passed: 64 unit and 15 production Edge browser tests, typecheck, lint, production build and audit0.
-- No current merge conflicts or uncommitted application work. Only this tracking update is uncommitted until its checkpoint commit.
+- web-deployment is pushed. Live deployment: https://tagstudio.zachcodes.dev and provider mirror https://tagstudio.pages.dev. Final evidence: 64 unit, 16 local Edge browser, 16 Ubuntu Chromium CI browser and 16 hosted Edge browser tests passed; types/lint/build and audit0.
+- No current merge conflicts or uncommitted application work. Only final documentation is being committed; no uncommitted implementation remains.
 
 ## Branches and completed features
 | Branch | Feature tip | Merge | Status |
 |---|---|---|---|
 | application-foundation | d494d36 | 378cdfd | Complete |
-| static-deployment | 1f9b927 | 5bae5ed | Complete; live publishing pending |
+| static-deployment | 1f9b927 | 5bae5ed | Complete; live publishing verified |
 | spreadsheet-import | 275845a | 8c1722a | Complete |
 | label-print-engine | b2123cf | 3bf791f | Complete |
 | reduce-pdf-memory | 0f8c35e | 7a06fe4 | Complete |
-| label-workspace | 410da15 | b203510 and ebd4333 | Complete including visual polish |
+| label-workspace | 1db4214 | b203510, ebd4333 and beaa0a6 | Complete including polish and actual preview counts |
 | bound-workbook-imports | 931f5b0abc27d0096e8f43cd2f006a810e5a02f3 | 0ff9609 | Complete |
-| verification-hardening | b7f584e | 71f5616 | Complete |
-| portfolio-documentation | 49edd99 | 95cac68 | Complete; live URL pending |
+| verification-hardening | 808eb6e | 71f5616 and372d90f | Complete including hosted-suite support |
+| portfolio-documentation | 49edd99 | 95cac68 | Complete; live URL verified |
 
 Worktrees are under .worktrees/label-workspace, spreadsheet-import (bound-workbook-imports), label-print-engine and portfolio-documentation. Feature worktrees are clean; generated review files are ignored. Keep them until final completion; they contain reproducible capture intermediates and review output.
 
@@ -43,16 +43,16 @@ Dedicated integrated review on 71f5616 and supplemental portfolio review found n
 
 Malicious DEFLATE/BIFF can consume resources before timeout. Large unique-label exports and final serialization require memory; 20k unique labels were not benchmarked. Raster PDF text is not searchable. Physical printer/scanner and Firefox/Safari were not tested. Unusual encrypted/ZIP64/descriptor/comment archives are rejected; resave ordinary XLSX/CSV. No project license has been selected. Future features listed in the plan remain out of MVP scope.
 
-## Hosting draft and next action
-Cloudflare signed-in Pages GitHub setup is unsaved. Existing integration authorizes private-dev-ph/AssetTagStudio. Draft project tagstudio, npm run build, dist, NODE_VERSION24. Production branch is still main until web-deployment is pushed: MUST change it to web-deployment before Save and Deploy. Requested hostname is tagstudio.zachcodes.dev; no domain has been added. No analytics or runtime secrets needed.
+## Final deployment and verification
+Cloudflare Pages project tagstudio uses private-dev-ph/AssetTagStudio, production branch web-deployment, npm run build, dist, NODE_VERSION24. Automatic deployments enabled. Both URLs return HTTPS200 and the configured CSP/nosniff/frame/referrer/permissions headers. Custom hostname is Active with SSL enabled and a proxied CNAME to tagstudio.pages.dev. Verified served bundle: index-DpM43OgR.js. No runtime/deployment secrets committed.
 
-1. Final tests complete; push only web-deployment, verify GitHub CI and deploy the correct branch.
-2. Inspect GitHub CI; select web-deployment in Cloudflare draft, deploy, add custom domain, verify HTTPS, headers and live CSV/Excel/QR/Code128/PDF/privacy paths.
-3. Record verified URL in README/showcase/deployment docs, final security/progress/handoff results, commit and push documentation; verify final deployment/CI and exact final SHA.
-4. Provide the requested structured report and evidence-based confidence rating.
+Live smoke exposed misleading partial-page preview copy;1db4214 fixed actual-record counting, merged inbeaa0a6. Then64 unit and16 local production browser tests passed. Portable hosted-suite support808eb6e merged in372d90f. GitHub Actions run37179931712 on372d90f passed clean install/types/lint/64unit/16Chromium/browser/build/audit0 on Ubuntu; browser duration29.9s. Prior run37179222970 passed64unit/15browser before the added regression.
 
-Live smoke found misleading preview-limit copy on partial sheets. Workspace branch now fixes actual-record counting and covers small and capped pages;2 focused production tests/types/lint/build passed. Integrate this fix, run final16-browser suite, then publish updated branch.
+First hosted suite passed15/16: the privacy-origin test detected inherited zone-wide Cloudflare Web Analytics injection. No inventory POST/value URL was observed; app CSP prohibited remote execution. Fixed externally with active Configuration Rule40df1295ed1e4564be60aee5c2d8ed5a, named Disable analytics for AssetTag Studio; expression (http.host eq "tagstudio.zachcodes.dev"), action Disable RUM. Main portfolio injection remains; app injection is absent. Keep this rule during hosting changes. Focused hosted privacy1/1 and complete hosted16/16 passed (55.3s), including QR decode, CSV/Excel and actual QR/Code128 PDF downloads, 20k repeated labels/834 pages, cancellation, XSS, headers, preferences, mobile and recovery. Browser UI download-event wrapper timed out, but actual Edge hosted PDF assertions passed. This was a control-tool limitation, not an app failure.
 
-Latest workspace fix1db4214 merged inbeaa0a6;64 unit and16 production Edge browser tests passed. Verification follow-up supports PLAYWRIGHT_BASE_URL for running the same suite against live HTTPS;2 focused local security tests/types/lint/build passed, ready to merge. Cloudflare39f5aa5 deployed; custom hostname Active/SSL enabled, HTTPS200 and all5 security headers verified. GitHub run37179222970 passed64unit/15Chromium browser/build/audit on Ubuntu.
+Final dedicated source/secret pass reviewed the complete system and final App/test-config changes: no new exploitable issue or secret matches. Supplemental artifact review was clean. Security-review.md records fixes, accepted resource limits and the resolved provider finding. README/showcase/deployment docs contain only verified URLs.
 
-Current integrated/deployed code372d90f. Live suite15/16 passed; Cloudflare zone adds static.cloudflareinsights.com beacon to tagstudio.zachcodes.dev only. Privacy-origin assertion correctly fails. Root is locating Web Analytics rules to exclude the hostname while preserving existing portfolio settings. App CSP already restricts scripts to self; no inventory uploads observed. Browser download-event wrapper timed out in Codex, but live Edge automated PDF downloads passed. Exact next: disable injection for this hostname, focused privacy check and full16-live suite, update final records/URLs and commit.
+## Exact next action / completion state
+All required features are complete. Commit/push this final documentation, verify its automatic Cloudflare deployment and GitHub workflow, then confirm clean status, unchanged main, all nine feature tips contained and matching origin/web-deployment. Record the exact final documentation SHA in the final report. No further implementation is required unless those final provider checks fail.
+
+Recommended future work is optional: physical printer/scanner validation, unique-label export benchmarks, Firefox/Safari coverage, bundle splitting and a targeted supported-linter update. Later product features remain outside MVP scope. No project license is selected.

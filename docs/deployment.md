@@ -7,8 +7,9 @@ The app builds to `dist` and has no backend, database, account or runtime secret
 - Live: [tagstudio.zachcodes.dev](https://tagstudio.zachcodes.dev), with [tagstudio.pages.dev](https://tagstudio.pages.dev) as the provider mirror.
 - Cloudflare Pages project: `tagstudio`; Git repository: `private-dev-ph/AssetTagStudio`; production branch: `web-deployment`.
 - Build: `npm run build`, output: `dist`, `NODE_VERSION=24`. Automatic Git deployments enabled; main is unchanged.
-- Custom hostname maps to `tagstudio.pages.dev` through a proxied CNAME; dashboard reports Active and SSL enabled. HTTPS200 and all five configured security headers verified on both hostnames on2026-10-04.
+- Custom hostname maps to `tagstudio.pages.dev` through a proxied CNAME; dashboard reports Active and SSL enabled. HTTPS 200 and all five configured security headers verified on both hostnames on 2026-10-04.
 - GitHub Actions independently verifies clean install, types, lint, unit/browser tests, build and audit. The deployed application bundle matches the locally verified build.
+- The existing zone-wide Web Analytics setting injected a beacon on the custom hostname. An active Configuration Rule named `Disable analytics for AssetTag Studio` matches `(http.host eq "tagstudio.zachcodes.dev")` and sets Disable RUM. The app response now has no injected beacon; the portfolio retains its analytics. Preserve this rule when changing hosting. See [Cloudflare's RUM configuration setting](https://developers.cloudflare.com/rules/configuration-rules/settings/#disable-real-user-monitoring-rum).
 
 ## Cloudflare Pages (recommended)
 
@@ -40,3 +41,5 @@ Sources: [Cloudflare build settings](https://developers.cloudflare.com/pages/con
 Local browser fallback: if the Chromium CDN is unavailable and Microsoft Edge is installed, use PLAYWRIGHT_CHANNEL=msedge for npm run test:e2e. CI uses bundled Chromium by default.
 
 To verify a deployed build with the same synthetic-data suite, set `PLAYWRIGHT_BASE_URL` to its HTTPS root URL and run `npm run test:e2e`. This skips the local build/server and keeps the privacy assertion tied to the configured origin. Clear this variable to return to local production testing. The suite performs no server writes; imported fixtures and generated PDFs stay in the test browser.
+
+Hosted acceptance:16/16 Playwright tests passed on tagstudio.zachcodes.dev after the scoped RUM exclusion. This includes actual QR/Code128 PDF downloads, multiple-sheet Excel import, Unicode QR decode and no inventory network/storage transmission. Local64unit/16browser and Ubuntu CI64unit/16Chromium also passed. Physical print hardware remains unverified.

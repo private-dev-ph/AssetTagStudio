@@ -1,6 +1,6 @@
 # Integrated security review
 
-Dedicated independent source review completed on web-deployment at 71f5616, with earlier feature reviews retained. No actionable exploitable finding or unresolved critical/high finding was identified. CSS polish and portfolio artifacts receive a supplemental review before publication; live response headers still require verification.
+Dedicated independent source review completed on web-deployment at 71f5616, with earlier feature reviews retained. No actionable exploitable finding or unresolved critical/high finding was identified. Supplemental CSS/App/artifact review and final integrated source/secret checks completed at372d90f. Live response headers, privacy and hosted workflows verified.
 
 | Severity | Area | Description | Disposition / fix | Fix commit | Remaining risk / acceptance |
 |---|---|---|---|---|---|
@@ -22,7 +22,7 @@ Dedicated independent source review completed on web-deployment at 71f5616, with
 - GitHub Actions uses read-only contents permissions and SHA-pinned actions. No runtime or deployment secrets committed.
 - Clean npm ci and npm audit --audit-level=moderate: 0 vulnerabilities. TypeScript, ESLint and 64 unit tests passed after clean install; 15 production browser tests passed before final CSS/portfolio integration.
 - Working-tree credential-pattern scan and all-branch Git-history scan: 0 matches. Tracked filename check found no environment secrets, private keys, node_modules, dist or test output. These targeted scans are not a claim of exhaustive secret detection.
-- Final production/browser and live-header results will be added after remaining integration and deployment.
+- Final evidence:64 unit,16 local Edge browser,16 Ubuntu Chromium CI browser and16 hosted Edge browser tests passed; audit0. All configured live security headers verified.
 
 Resource limits and print/output limitations are accepted because parsing/export are user-triggered local operations, input and caches are bounded, cancellation/timeout and recoverable errors are provided, and the remaining limits are explained in import-format.md and pdf-generation.md. They must not be advertised as a strict hostile-file sandbox or unlimited export capacity.
 
@@ -30,4 +30,6 @@ Supplemental review of capture scripts, synthetic media/PDF, ADRs and notices fo
 
 Final integrated suite on95cac68:64/64 unit,15/15 production browser tests, typecheck/lint/build passed; npm audit reports0 vulnerabilities. Includes the CSS regression assertion and all security/error/privacy paths. Live-host security header verification remains pending.
 
-Live finding (Medium, hosting privacy): zone-level Cloudflare Web Analytics injects an external beacon script on tagstudio.zachcodes.dev, absent from tagstudio.pages.dev. Live same-origin privacy test failed while other15 tests passed; no inventory POST/value URL found, restrictive CSP blocks remote script execution. Disposition in progress: exclude this hostname from automatic injection, retain portfolio analytics, then rerun privacy/full hosted suite.
+Live finding (Medium, hosting privacy): zone-level Cloudflare Web Analytics injects an external beacon script on tagstudio.zachcodes.dev, absent from tagstudio.pages.dev. Live same-origin privacy test failed while other15 tests passed; no inventory POST/value URL found, restrictive CSP blocks remote script execution. Disposition fixed: active hostname-scoped Configuration Rule40df1295ed1e4564be60aee5c2d8ed5a sets Disable RUM. Verified app beacon absent, portfolio beacon retained, privacy1/1 and hosted16/16 passed. No application source change needed; fix recorded in final deployment documentation.
+
+Final dedicated pass after all feature integrations reviewed App actual-page counting and portable test configuration, runtime request surfaces and tracked/history secret patterns; no new exploitable finding. Source/header/dependency boundaries remain intact. The only live finding was provider analytics injection, now fixed and negatively verified. No unresolved critical/high findings. Accepted risks remain parser/PDF device resources, raster print verification, and unsupported development ESLint9 maintenance. Final document-only tip does not change tested application behavior.
