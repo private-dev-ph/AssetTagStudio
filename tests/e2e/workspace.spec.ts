@@ -32,7 +32,7 @@ test('sample CSV builds a QR label PDF locally', async ({ page }) => {
 test('Excel workbook selects a sheet and exports multipage Code 128 labels', async ({ page }) => {
   test.setTimeout(60_000);
   const workbook = XLSX.utils.book_new();
-  const rows = [['Asset ID', 'Name'], ...Array.from({ length: 60 }, (_, index) => [`LAB-${String(index + 1).padStart(3, '0')}`, `Lab asset ${index + 1}`])];
+  const rows = [['Asset ID', 'Name', 'Serial'], ...Array.from({ length: 60 }, (_, index) => [`LAB-${String(index + 1).padStart(3, '0')}`, `Lab asset ${index + 1}`, `SER-${String(index + 1).padStart(3, '0')}`])];
   XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(rows), 'Inventory');
   XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([['Other ID', 'Notes'], ['OTHER-1', 'Second sheet']]), 'Other');
   const buffer = Buffer.from(XLSX.write(workbook, { type: 'array', bookType: 'xlsx' }));
@@ -40,7 +40,7 @@ test('Excel workbook selects a sheet and exports multipage Code 128 labels', asy
   await page.goto('/');
   await page.getByLabel('Choose a CSV or Excel file').setInputFiles({ name: 'inventory.xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', buffer });
   await expect(page.getByRole('combobox', { name: 'Worksheet' })).toHaveValue('Inventory');
-  await expect(page.getByText('60 rows · 2 columns')).toBeVisible();
+  await expect(page.getByText('60 rows · 3 columns')).toBeVisible();
   await expect(page.getByText('60 selected')).toBeVisible();
   await expect(page.getByText('Showing 1–50 of 60 matching rows · 50 per page')).toBeVisible();
   await page.getByRole('button', { name: 'Next rows' }).click();
@@ -50,6 +50,7 @@ test('Excel workbook selects a sheet and exports multipage Code 128 labels', asy
   await page.getByRole('checkbox', { name: 'Select all matching assets' }).check();
   await expect(page.getByText('60 selected')).toBeVisible();
   await page.getByRole('textbox', { name: 'Search assets' }).fill('');
+  await page.getByRole('combobox', { name: 'Identifier field', exact: true }).selectOption('Serial');
   await page.getByRole('button', { name: 'Code 128' }).click();
   await expect(page.getByRole('button', { name: 'Download PDF' })).toBeEnabled();
 

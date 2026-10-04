@@ -28,7 +28,7 @@ test('large datasets keep DOM bounded and PDF cancellation is recoverable', asyn
   await page.goto('/');
   const rows = ['asset_id,name', ...Array.from({ length: 1000 }, (_, i) => `A-${i},Tool ${i}`)].join('\n');
   await page.getByLabel('Choose a CSV or Excel file').setInputFiles({ name: 'large.csv', mimeType: 'text/csv', buffer: Buffer.from(rows) });
-  await expect(page.getByText('1000 rows · 2 columns')).toBeVisible();
+  await expect(page.getByText('1,000 rows · 2 columns')).toBeVisible();
   await expect(page.locator('tbody tr')).toHaveCount(50);
   expect(await page.locator('.paper-label').count()).toBeLessThanOrEqual(36);
   await page.getByRole('button', { name: /Download PDF/ }).click();
@@ -57,7 +57,7 @@ test('the 20000-row boundary exports a complete PDF with repeated labels', async
   await page.goto('/');
   const rows = ['asset_id,name', ...Array.from({ length: 20_000 }, () => 'SHARED-1,Shared tool')].join('\n');
   await page.getByLabel('Choose a CSV or Excel file').setInputFiles({ name: 'boundary.csv', mimeType: 'text/csv', buffer: Buffer.from(rows) });
-  await expect(page.getByText('20000 rows · 2 columns')).toBeVisible();
+  await expect(page.getByText('20,000 rows · 2 columns')).toBeVisible();
   await expect(page.locator('tbody tr')).toHaveCount(50);
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: /Download PDF/ }).click();
