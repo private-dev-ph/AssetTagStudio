@@ -4,6 +4,8 @@ import type { Dataset } from '../../types';
 import { MAX_COLUMNS, MAX_FILE_BYTES, MAX_ROWS } from './limits';
 import { ImportError } from './errors';
 import { normalizeRows } from './normalize';
+import { preflightXlsxZip } from './zipPreflight';
+import { preflightXlsCfb } from './cfbPreflight';
 
 export { MAX_CELL_CHARACTERS, MAX_COLUMNS, MAX_FILE_BYTES, MAX_ROWS } from './limits';
 export { ImportError } from './errors';
@@ -72,8 +74,11 @@ function workbookFromBuffer(buffer: ArrayBuffer): XLSX.WorkBook {
   const isLegacyWorkbook = bytes.length >= 8 && bytes[0] === 0xd0 && bytes[1] === 0xcf && bytes[2] === 0x11 && bytes[3] === 0xe0 && bytes[4] === 0xa1 && bytes[5] === 0xb1 && bytes[6] === 0x1a && bytes[7] === 0xe1;
   if (!isZipWorkbook && !isLegacyWorkbook) throw new ImportError('The file does not have a valid XLSX or XLS workbook signature.');
   try {
+    if (isZipWorkbook) preflightXlsxZip(buffer);
+    else preflightXlsCfb(buffer);
     return XLSX.read(buffer, { type: 'array', sheetRows: MAX_ROWS + 2, cellFormula: true });
   } catch (error) {
+    if (error instanceof ImportError) throw error;
     const detail = error instanceof Error ? error.message : 'unknown workbook error';
     throw new ImportError(`Could not read the Excel workbook: ${detail}`);
   }
