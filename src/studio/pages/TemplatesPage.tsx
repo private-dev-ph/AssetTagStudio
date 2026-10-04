@@ -184,7 +184,7 @@ export function TemplatesPage({ dataset, template, page, busy, onApplyTemplate, 
   </ToolFrame>;
 
   return <ToolFrame title="Templates" description="Save reusable label and page settings. Map every field to this dataset before applying a template.">
-    {(error || notice) && <div className={`alert ${error ? 'error-alert' : 'success-alert'}`} role={error ? 'alert' : 'status'}>{error || notice}{loadFailed && <button className="secondary-button" disabled={disabled || resetting} onClick={() => void resetTemplateLibrary()}>{resetting ? 'Resetting…' : 'Clear saved templates and retry'}</button>}</div>}
+    {(error || (notice && !loading && !loadFailed)) && <div className={`alert ${error ? 'error-alert' : 'success-alert'}`} role={error ? 'alert' : 'status'}>{error || notice}{loadFailed && <button className="secondary-button" disabled={disabled || resetting} onClick={() => void resetTemplateLibrary()}>{resetting ? 'Resetting…' : 'Clear saved templates and retry'}</button>}</div>}
     <div className="tool-grid">
       <section className="tool-card">
         <h2>Built-in templates</h2>
