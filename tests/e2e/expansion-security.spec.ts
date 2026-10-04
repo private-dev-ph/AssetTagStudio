@@ -25,6 +25,12 @@ test('the current QR and Code 128 labels decode to the selected identifier', asy
   const qr = jsQR(new Uint8ClampedArray(pixels.data), pixels.width, pixels.height);
   expect(qr?.data).toBe('STUDIO-0042');
 
+  await page.getByRole('link', { name: 'Code inspector', exact: true }).click();
+  await page.getByRole('button', { name: 'Inspect current label' }).click();
+  await expect(page.locator('pre.tool-preview')).toHaveText('STUDIO-0042');
+  await expect(page.locator('dd').first()).toHaveText('QR CODE');
+
+  await page.getByRole('link', { name: 'Asset labels', exact: true }).click();
   const qrSource = await image.getAttribute('src');
   await page.getByRole('button', { name: 'Code 128', exact: true }).click();
   await expect.poll(() => image.getAttribute('src')).not.toBe(qrSource);
@@ -42,6 +48,11 @@ test('the current QR and Code 128 labels decode to the selected identifier', asy
   const bitmap = new BinaryBitmap(new HybridBinarizer(new RGBLuminanceSource(luminance, pixels.width, pixels.height)));
   expect(reader.decode(bitmap).getText()).toBe('STUDIO-0042');
   reader.reset();
+
+  await page.getByRole('link', { name: 'Code inspector', exact: true }).click();
+  await page.getByRole('button', { name: 'Inspect current label' }).click();
+  await expect(page.locator('pre.tool-preview')).toHaveText('STUDIO-0042');
+  await expect(page.locator('dd').first()).toHaveText('CODE 128');
 });
 
 test('pasted unsafe content is displayed as text and never opened or executed', async ({ page }) => {
@@ -49,14 +60,15 @@ test('pasted unsafe content is displayed as text and never opened or executed', 
   const pageErrors: string[] = [];
   page.on('request', request => requests.push(request.url()));
   page.on('pageerror', error => pageErrors.push(error.message));
-  const popupPromise = page.waitForEvent('popup', { timeout: 250 }).catch(() => null);
+  const popups: Page[] = [];
+  page.on('popup', popup => popups.push(popup));
   await page.goto('/#/code-inspector');
   const content = 'javascript:alert(1) <img src=x onerror=alert(2)>';
   await page.getByLabel('Inspector content').fill(content);
   await page.getByRole('button', { name: 'Analyze pasted content' }).click();
   await expect(page.locator('pre.tool-preview')).toContainText(content);
   await expect(page.getByText(/Unsupported URI scheme: javascript/i)).toBeVisible();
-  expect(await popupPromise).toBeNull();
+  expect(popups).toHaveLength(0);
   expect(pageErrors).toEqual([]);
   expect(requests.some(url => /javascript:|src=x|onerror/i.test(url))).toBe(false);
   expect(await page.locator('img').count()).toBe(0);

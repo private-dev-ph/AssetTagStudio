@@ -60,8 +60,8 @@ test('ID generation detects collisions, fills blanks only, and undoes as one wor
   await expect(page.getByRole('cell', { name: '001', exact: true })).toBeVisible();
   const blankOne = page.getByRole('row').filter({ hasText: 'Blank one' });
   const blankTwo = page.getByRole('row').filter({ hasText: 'Blank two' });
-  await expect(blankOne.locator('td').nth(1)).toHaveText('');
-  await expect(blankTwo.locator('td').nth(1)).toHaveText('');
+  await expect(blankOne.locator('td').nth(1)).toHaveText('—');
+  await expect(blankTwo.locator('td').nth(1)).toHaveText('—');
 });
 
 test('Data Health remaps normalized headers, trims cells, and restores both changes with undo', async ({ page }) => {
@@ -83,9 +83,9 @@ test('Data Health remaps normalized headers, trims cells, and restores both chan
   await page.getByRole('link', { name: 'Asset labels', exact: true }).click();
   await expect(page.getByRole('cell', { name: 'Widget', exact: true })).toBeVisible();
   await page.getByRole('button', { name: /Undo Trim cell whitespace/ }).click();
-  await expect(page.getByRole('cell', { name: ' Widget ', exact: true })).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'Widget', exact: true })).toHaveAttribute('title', ' Widget ');
   await page.getByRole('button', { name: /Undo Normalize headers/ }).click();
-  await expect(page.getByRole('columnheader', { name: /Asset {2}ID/ })).toBeVisible();
+  expect(await page.locator('thead th button.sort-button').first().textContent()).toContain('Asset  ID');
   await expect(page.getByLabel('Unique identifier field')).toHaveValue('Asset  ID');
 });
 
@@ -142,8 +142,7 @@ test('template library imports strictly, renames without replacing settings, dup
   await expect(copyRow).toHaveCount(0);
 
   const badDocument = { version: 1, kind: 'template', name: 'Unsafe', template: {}, records: [{ id: 'secret', values: { [secret]: 'retained' } }] };
-  await page.getByRole('button', { name: 'Import .assettag.json' }).click();
-  await page.locator('input[type="file"]').last().setInputFiles({ name: 'unsafe.assettag.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(badDocument)) });
+  await page.locator('input[type="file"][accept*=".assettag.json"]').setInputFiles({ name: 'unsafe.assettag.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(badDocument)) });
   await expect(page.getByRole('alert')).toContainText(/unsupported property/i);
 
   await page.reload();
@@ -249,8 +248,8 @@ test('a successful print manifest retains its original IDs, pages, and coordinat
   await page.getByRole('button', { name: 'Remove selected' }).click();
   await expect(page.getByRole('cell', { name: 'TAG-1', exact: true })).toHaveCount(0);
   await openView(page, 'manifest');
-  const jsonPromise = page.waitForEvent('download');
-  const csvPromise = page.waitForEvent('download');
+  const jsonPromise = page.waitForEvent('download', { predicate: download => download.suggestedFilename() === 'asset-print-manifest.json' });
+  const csvPromise = page.waitForEvent('download', { predicate: download => download.suggestedFilename() === 'asset-print-manifest.csv' });
   await page.getByRole('button', { name: 'Download JSON and CSV' }).click();
   const [jsonDownload, csvDownload] = await Promise.all([jsonPromise, csvPromise]);
   const manifest = JSON.parse((await downloadBytes(jsonDownload)).toString('utf8')) as { records: Array<{ assetId: string; page: number; labelIndex: number; xMm: number; yMm: number }> };
@@ -273,8 +272,8 @@ test('FieldLens PDF and CSV use matching IDs, and formula-leading IDs are reject
   await page.getByLabel('Asset type').selectOption('Asset Type');
   await page.getByLabel('Serial').selectOption('Serial');
   await page.getByLabel('Location').selectOption('Location');
-  const pdfPromise = page.waitForEvent('download');
-  const csvPromise = page.waitForEvent('download');
+  const pdfPromise = page.waitForEvent('download', { predicate: download => download.suggestedFilename() === 'fieldlens-labels.pdf' });
+  const csvPromise = page.waitForEvent('download', { predicate: download => download.suggestedFilename() === 'fieldlens-assets.csv' });
   await page.getByRole('button', { name: 'Create FieldLens PDF and CSV' }).click();
   const [pdfDownload, csvDownload] = await Promise.all([pdfPromise, csvPromise]);
   expect(pdfDownload.suggestedFilename()).toBe('fieldlens-labels.pdf');
