@@ -7,4 +7,3 @@ Imported records live in memory while this page is open. Only UI preferences are
 The static hosting provider receives normal requests for application assets, including IP/user agent metadata. It does not receive spreadsheet contents. Browser extensions or compromised devices can inspect local data; a static app cannot protect against them.
 
 Do not deploy third-party scripts or analytics that inspect inventory. Spreadsheet formulas/macros are never executed. Rendered spreadsheet strings are treated as text. Payload URLs are encoded into codes without fetching them; inspect destinations before scanning unfamiliar labels.
-

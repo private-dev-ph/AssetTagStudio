@@ -64,4 +64,3 @@ test('legacy XLS imports locally and a malformed workbook recovers', async ({ pa
   await page.getByRole('button', { name: /Download PDF/ }).click();
   expect((await downloadPromise).suggestedFilename()).toMatch(/\.pdf$/);
 });
-

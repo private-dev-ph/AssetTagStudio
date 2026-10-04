@@ -17,4 +17,3 @@ http.createServer((req,res)=>{
   stream.on('error', () => { if (!res.headersSent) res.writeHead(500); res.end(); });
   stream.pipe(res);
 }).listen(4173,'127.0.0.1',()=>console.log('Production verification server http://127.0.0.1:4173'));
-
