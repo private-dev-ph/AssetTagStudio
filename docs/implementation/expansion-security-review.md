@@ -37,4 +37,17 @@ Initial failures and fixes remain recorded in handoff/report; final33-test run h
 
 ## Accepted validation limits
 
+## User testing follow-up review — 2026-10-05
+
+Reviewed integrated follow-up source7bbb0e7: renderer uses explicit black text fill; the asset checkbox width is scoped and tool headers are horizontal; previews preserve aspect ratio and async cleanup; inventory remains in memory, saved settings remain local. Footer links are explicit navigation with noopener/noreferrer. License text remains served by the build. Scrollbar themes include a forced-colours native fallback. No dependency, storage schema, network API or credential was added.
+
+| Severity / area | Finding | Disposition / fix | Remaining risk |
+|---|---|---|---|
+| Medium / overwrite consent | Intermediate checkbox wiring could enable overwrite by unchecking blank-only | Fixed895f962: only explicit Allow overwriting grants permission; browser verifies populated rows remain protected | Existing overwrite remains an explicit user action |
+| Medium / ID batch integrity | Reusing001 after Apply would collide in the next batch and reset position | Fixed895f962: exact self-commit reference guards continuation, retains position and advances sequence; explicit Next/Preview/Apply; two-batch browser test verifies unique IDs and undo | Sequence maximum requires choosing another pattern/start; collisions still block Apply |
+| Low / table readability | Intermediate global90px first-column minimum widened unrelated tools | Removed in d1d4344; only Health severity has90px minimum; all headers nowrap | Long data values wrap inside bounded tables |
+| Medium / label readability | Text-only backgrounds left text fill white | Fixed2773dc0: drawFields uses black; actual mirrored interior pixels and optional QR checked in Edge | Physical paper/contrast remains unverified |
+
+Independent read-only reviewer rechecked895f962/d1d4344 and closed both table-sizing and batch-continuation findings, with no further actionable issue. Root verified focused18 tests and full181 unit/type/lint/build; five new Edge scenarios passed after correcting the new Pattern selector (its accessible label includes token help). Fresh npm audit --audit-level=moderate --json reports0 vulnerabilities across292 lock-graph dependencies. Final complete browser run and Git verification follow on feature-expansion. No critical/high unresolved security finding identified.
+
 No physical printer/scanner/camera trial; no Firefox/Safari run; no FieldLens receiver CSV ingestion test. Main JS bundle exceeds Vite500kB warning threshold; warning is retained. Decode supports one upright QR/Code128 in PNG/JPEG; other formats/symbologies unsupported. Browser workers/OffscreenCanvas/IndexedDB availability and storage restrictions can produce explicit failures. No critical/high unresolved finding identified in this review; final local verification passed.

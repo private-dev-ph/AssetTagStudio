@@ -115,7 +115,7 @@ test('ID guidance explains protected populated cells and the blank fixture gener
   await loadCsv(page, 'Asset ID,Asset Name\nOLD-1,First\nOLD-2,Second\n');
   await openView(page, 'id-generator');
   await expect(page.getByText(/0 eligible/)).toBeVisible();
-  await page.getByLabel('Pattern', { exact: true }).fill('TEST-{sequence}');
+  await page.getByLabel('Pattern').fill('TEST-{sequence}');
   await page.getByRole('button', { name: 'Preview IDs' }).click();
   await expect(page.getByRole('button', { name: 'Apply IDs', exact: true })).toBeDisabled();
   await expect(page.getByText(/Enable.*Allow overwriting existing IDs/).first()).toBeVisible();
@@ -134,7 +134,7 @@ test('ID guidance explains protected populated cells and the blank fixture gener
   await openView(page, 'id-generator');
   await page.getByLabel('Identifier column', { exact: true }).selectOption('Asset ID');
   await expect(page.getByLabel('Generate for blank IDs only')).toBeChecked();
-  await page.getByLabel('Pattern', { exact: true }).fill('TEST-{sequence}');
+  await page.getByLabel('Pattern').fill('TEST-{sequence}');
   await page.getByLabel('Preview count', { exact: true }).fill('2');
   await page.getByRole('button', { name: 'Preview IDs' }).click();
   await expect(page.getByRole('cell', { name: 'TEST-002', exact: true })).toBeVisible();

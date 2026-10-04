@@ -17,3 +17,11 @@ npm run lint
 ```
 
 Status: focused tests (27), typecheck, and lint pass locally. Implementation is committed on `asset-data-tools`, remains local and unpushed. No hosted checks or deployment are part of this work. Blank source rows are counted but cannot be restored or edited after parsing; duplicate headers still reject import by design.
+
+## User testing improvements
+
+`improve-data-tool-batches` adds **Start position**, **Preview count**, **Previous batch** and **Next batch** controls. Positions follow selected rows in dataset order, regardless of checkbox click order. Serial batches contain at most2,000 rows; ID batches at most5,000. The initial count is the smaller of2,000 and the selection size. Only the first200 results are displayed; Apply affects every row in that bounded preview and no other row. Selection itself is unchanged.
+
+After a successful Apply, the tool retains its batch position. ID sequence advances by the number of IDs generated; click Next batch and Preview again to continue. The final shorter batch gets the remaining count. Changes to options/batch invalidate results and pending serial responses; external dataset/selection changes reset positions. Deduplication also resets positions because removed rows change the order. Apply remains explicit and undoable.
+
+ID eligibility counts distinguish selected, blank and populated values. Existing IDs remain protected unless **Allow overwriting existing IDs** is explicitly checked. Unchecking blank-only does not grant overwrite permission. The [blank-ID test fixture](../../public/examples/id-generator.csv) demonstrates `TEST-{sequence}` with padding3. Collisions still block Apply.
