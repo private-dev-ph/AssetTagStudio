@@ -29,7 +29,7 @@ function readTemplate(value: unknown): LabelTemplate {
       field: typeof code.field === 'string' ? code.field.slice(0, 200) : '',
       sizeMm: finite(code.sizeMm, 8, 60) ? code.sizeMm : DEFAULT_TEMPLATE.code.sizeMm,
       barcodeScale: finite(code.barcodeScale, 0.8, 3) ? code.barcodeScale : 1,
-      payload: typeof code.payload === 'string' ? code.payload.slice(0, 1000) : '',
+      payload: typeof code.payload === 'string' && code.payload.length <= 2000 ? code.payload : '',
       barcodeHeightMm: finite(code.barcodeHeightMm, 5, 40) ? code.barcodeHeightMm : DEFAULT_TEMPLATE.code.barcodeHeightMm,
       barcodeText: typeof code.barcodeText === 'boolean' ? code.barcodeText : true,
       barcodeTextPosition: code.barcodeTextPosition === 'top' ? 'top' : 'bottom',

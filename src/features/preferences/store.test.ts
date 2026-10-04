@@ -9,14 +9,35 @@ describe('local preferences', () => {
   });
 
   it('validates each persisted value independently', () => {
-    expect(parsePreferences('{"theme":"dark","unit":"x"}')).toEqual({ theme: 'dark', unit: 'mm' });
+    expect(parsePreferences('{"theme":"dark","unit":"x"}')).toEqual({ ...DEFAULT_PREFERENCES, theme: 'dark', unit: 'mm' });
+  });
+
+  it('round-trips valid label and page preferences without row data', () => {
+    const value = {
+      ...DEFAULT_PREFERENCES,
+      template: { ...DEFAULT_PREFERENCES.template, widthMm: 80, code: { ...DEFAULT_PREFERENCES.template.code, field: 'Asset ID', payload: 'https://inventory.test/{Asset ID}', barcodeScale: 1.6 } },
+      page: { ...DEFAULT_PREFERENCES.page, preset: 'Custom' as const, widthMm: 300 },
+    };
+    expect(parsePreferences(JSON.stringify(value))).toEqual(value);
+  });
+
+  it('replaces out-of-range saved dimensions and code settings with safe defaults', () => {
+    const value = parsePreferences(JSON.stringify({ template: { ...DEFAULT_PREFERENCES.template, widthMm: 999, heightMm: -1, paddingMm: 99, code: { ...DEFAULT_PREFERENCES.template.code, sizeMm: 999, barcodeHeightMm: 100, barcodeScale: 9 } }, page: { ...DEFAULT_PREFERENCES.page, widthMm: 0, heightMm: -10 } }));
+    expect(value.template.widthMm).toBe(DEFAULT_PREFERENCES.template.widthMm);
+    expect(value.template.heightMm).toBe(DEFAULT_PREFERENCES.template.heightMm);
+    expect(value.template.paddingMm).toBe(DEFAULT_PREFERENCES.template.paddingMm);
+    expect(value.template.code.sizeMm).toBe(DEFAULT_PREFERENCES.template.code.sizeMm);
+    expect(value.template.code.barcodeHeightMm).toBe(DEFAULT_PREFERENCES.template.code.barcodeHeightMm);
+    expect(value.template.code.barcodeScale).toBe(1);
+    expect(value.page.widthMm).toBe(DEFAULT_PREFERENCES.page.widthMm);
+    expect(value.page.heightMm).toBe(DEFAULT_PREFERENCES.page.heightMm);
   });
 
   it('loads and saves without persisting dataset state', () => {
     const values = new Map<string, string>();
     const storage = { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => values.set(key, value) };
-    savePreferences({ theme: 'dark', unit: 'in' }, storage);
-    expect(loadPreferences(storage)).toEqual({ theme: 'dark', unit: 'in' });
+    savePreferences({ ...DEFAULT_PREFERENCES, theme: 'dark', unit: 'in' }, storage);
+    expect(loadPreferences(storage)).toEqual({ ...DEFAULT_PREFERENCES, theme: 'dark', unit: 'in' });
     expect([...values.keys()]).toEqual([PREFERENCES_KEY]);
   });
 
