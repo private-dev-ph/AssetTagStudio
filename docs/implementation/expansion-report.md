@@ -5,9 +5,9 @@ Date: 2026-10-05. Scope: all twelve requested features, local development/testin
 ## Repository state
 
 - Original and unchanged main: `345071383d7029423e805efb799204e6852f69f7`.
-- Integration/source checkpoint: `e57f9f3f71bd2fd4f110661c2f5a296426af4fe6` on `feature-expansion`. Final documentation commits follow this verified source; resolve the exact final tip with `git rev-parse feature-expansion`.
+- Integration/source checkpoint: `4388d76a3773cd23d10b4dbe0a9c6c7c4e8878cd` on `feature-expansion`. Final documentation commits follow this verified source; resolve the exact final tip with `git rev-parse feature-expansion`.
 - No push, main merge, deployment or hosted/CI test was performed. The live site continues to serve main.
-- All nine required feature-branch tips were verified as ancestors of feature-expansion. No required work is stranded on an abandoned branch.
+- All ten required feature-branch tips were verified as ancestors of feature-expansion. No required work is stranded on an abandoned branch.
 
 ## Branches
 
@@ -21,6 +21,7 @@ Date: 2026-10-05. Scope: all twelve requested features, local development/testin
 | expansion-workspace | Root subpages, atomic undo, payload builder, successful job publication | e57f9f3 |
 | expansion-regressions | Browser workflows, privacy and storage negatives | Workspace merges; integration e57f9f3 |
 | code-inspector-hardening | Deadline/cancellation across native image preprocessing | Workspace 2bca242; integration e57f9f3 |
+| serial-worker-startup | Separate bounded native startup and strict regex execution deadlines | 4388d76 |
 | bound-settings-library-reads | Bounded storage reads, overflow recovery and quota failure propagation | Workspace fa5fddf / 32565ea; integration e57f9f3 |
 
 ## Implemented features
@@ -44,14 +45,14 @@ App owns one in-memory dataset, selection, settings, eight-entry/24MiB undo and 
 
 ## Testing
 
-- Final integration: `npm test` — **173 passed, 24 files, zero failed**.
+- Final integration: `npm test` — **175 passed, 24 files, zero failed**.
 - `npm run typecheck`, `npm run lint`, `npm run build` — pass. Vite large-main-chunk warning retained: approximately888kB minified /314kB gzip; worker bundles remain local.
-- Local Edge browser command: `$env:PLAYWRIGHT_CHANNEL='msedge'; $env:PLAYWRIGHT_BASE_URL='http://127.0.0.1:4173'; npx playwright test`. Final complete33-test run pending at this checkpoint.
-- Clean isolated install: `npm ci --ignore-scripts` installed242 packages with0 reported vulnerabilities; complete173 unit/type/build checks passed there. Final-source clean build pending.
+- Local Edge browser command: `$env:PLAYWRIGHT_CHANNEL='msedge'; $env:PLAYWRIGHT_BASE_URL='http://127.0.0.1:4173'; npx playwright test`. **33 passed, zero failed** (16 unchanged original regressions plus17 expansion tests).
+- Clean isolated install: `npm ci --ignore-scripts` installed242 packages with0 reported vulnerabilities; complete173 unit/type/build checks passed there. Final-source clean build and type compilation pass with identical bundle outputs.
 - Actual QR/Code128 worker decoding, PNG rejection/recovery, camera denial/late-track cleanup, unsafe pasted content, data transactions/undo, template/privacy/capacity/recovery, PDF/CSV/JSON identity and signed coordinates, profile persistence and20,000 repeated-label export covered locally.
 - Desktop/mobile visual QA of Cable/Templates/Inspector: no document overflow at390px and no page errors. Physical hardware trials were not performed.
 
-Failures were investigated and retained as regressions: duplicate status text caused an old selector ambiguity; accessible Health naming was corrected; density/CSV/preset-mapping fixtures were corrected without weakening assertions. The quota negative exposed a real callback-error bug, fixed in fc7246c; focused failure/no-partial-save/successful-retry case passes. Initial browser totals29/30 and32/33 precede these fixes. No test was removed or suppressed.
+Failures were investigated and retained as regressions: duplicate status text caused an old selector ambiguity; accessible Health naming was corrected; density/CSV/preset-mapping fixtures were corrected without weakening assertions. The quota negative exposed a real callback-error bug, fixed in fc7246c; focused failure/no-partial-save/successful-retry case passes. Initial browser totals29/30 and32/33 precede these fixes. A later serial-pattern timeout counted worker startup in the execution budget; fixed c1f4dbc with a ready handshake,5s startup and100ms execution limits. Eight focused unit checks and five repeated unchanged browser workflows pass. No test was removed or suppressed.
 
 ## Security
 
@@ -68,4 +69,4 @@ Dedicated integrated root and independent read-only review; all concrete finding
 - Calibration reference sheets require paper at least100×80mm; smaller label sheets can still export labels independently.
 - Follow-up outside this expansion: bundle splitting, supported development ESLint migration, decoder maintenance monitoring, physical/cross-browser benchmarks, offline/PWA installation, direct browser printing, local logos/images and additional code formats.
 
-Implementation confidence will be assigned after the final complete branch verification; hardware, cross-browser, receiver-import and large unique-PDF uncertainties prevent100%.
+**Implementation confidence: 93% / 100.** Automated integration evidence is strong; physical hardware, other browsers, receiver CSV ingestion and large unique-PDF performance remain unverified.

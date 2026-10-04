@@ -8,7 +8,7 @@
 
 ## Validation
 
-`src/features/templates/documents.test.ts` covers version 1 round trips, compatibility with optional print contracts, preservation of omitted optionals, immutable field mapping, hostile column names, unmapped references, unknown properties, row data, malformed JSON and payload tokens, future versions, invalid numeric/cross-field settings, and size limits. Browser IndexedDB lifecycle, quota, and blocked-upgrade behavior require browser integration coverage in the integrating branch.
+`src/features/templates/documents.test.ts` covers version 1 round trips, compatibility with optional print contracts, preservation of omitted optionals, immutable field mapping, hostile column names, unmapped references, unknown properties, row data, malformed JSON and payload tokens, future versions, invalid numeric/cross-field settings, and size limits. Final local Edge coverage verifies CRUD, settings-only persistence, capacity, quota failure/retry, corruption and per-store recovery. Blocked-upgrade and cross-browser behavior remain follow-up checks.
 
 ## Limits
 
