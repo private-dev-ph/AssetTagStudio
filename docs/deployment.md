@@ -4,6 +4,8 @@ The app builds to `dist` and has no backend, database, account or runtime secret
 
 ## Verified deployment
 
+QR branding release on2026-10-04: main114eb83 production deployment1f89300c-ae9f-427b-a866-5ec63cc52141 serves the new header mark, adaptive `/branding/favicon.svg`, PNG favicon/touch icon and1200×630 `/branding/social-card.png`. Both hostnames serve all11branding assets with correct types and matching source content (SVG line endings normalized); security headers/no analytics retained. Public root social metadata uses absolute custom-host PNG URLs. Main CI37208893314 passed100unit/16Chromium/build/audit0 and hosted Edge16/16 passed (45.8s). Later documentation-only pushes retain identical application/asset content. Third-party preview and favicon caches can retain old images until refreshed.
+
 - Live: [tagstudio.zachcodes.dev](https://tagstudio.zachcodes.dev), with [tagstudio.pages.dev](https://tagstudio.pages.dev) as the provider mirror.
 - Cloudflare Pages project: `tagstudio`; Git repository: `private-dev-ph/AssetTagStudio`; production branch: `main` after the owner-authorized cutover on 2026-10-04. Exact cutover status and release SHA are recorded in implementation/handoff.md.
 - Build: `npm run build`, output: `dist`, `NODE_VERSION=24`. Automatic Git deployments enabled. The initial release used `web-deployment`; the owner subsequently authorized merging it into main and serving main.
