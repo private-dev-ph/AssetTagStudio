@@ -36,3 +36,7 @@ Finish focused root checks and commit this checkpoint. Merge print-identity-pack
 ## Integrated checkpoint 80f0d20
 
 Reviewed print74de40d merged0cd6049; regression298ecfb merged80f0d20, clean source integration. Independent full168unit/24files, types, lint, production build pass. Extra PDFdraw/manifest coordinate regression6focusedpass (169total expected). Full local Edge29/30pass: all16original plus13new; capacity/recovery fixture omitted required preset field mapping, correction underway on expansion-regressions. New storage-write failure regression requested. npm audit0. Public quickstart/cable/location examples added; no remote action. Next: merge corrected tests, run focused storage browser checks, final security review, clean install verification, then merge workspace into feature-expansion.
+
+## Security remediation checkpoint
+
+Root code-inspector-hardening moves all uploaded/current PNG preprocessing into the terminable decoder worker. Focused inspector12tests/type/lint pass; pending production browser rerun. Print68285e9 fixes text-only Cable preset validation and any initial printer-library load failure recovery (10renderer tests/type/lint). Storage owner bounds reads and adds printer overflow recovery regression. Clean local npmci --ignore-scripts installed242packages/audit0; unsupported development ESLint warning retained for follow-up. No publication/main changes.
