@@ -36,6 +36,7 @@ export function normalizeRows(rows: unknown[][]): Dataset {
     if (!header) throw new ImportError(`Header ${index + 1} is empty. Give every column a name.`);
     return header;
   });
+  const sourceHeaders = headerRow.map((cell, index) => stringifyCell(cell, firstNonEmpty + 1, index + 1));
   const seen = new Set<string>();
   for (const header of columns) {
     if (seen.has(header)) throw new ImportError(`Duplicate header "${header}". Column names must be unique.`);
@@ -43,13 +44,14 @@ export function normalizeRows(rows: unknown[][]): Dataset {
   }
 
   const records: AssetRecord[] = [];
+  let removedEmptyRows = 0;
   const warnings: string[] = [];
   const emptyColumns = new Set(columns);
   let longCellCount = 0;
   const longCellExamples: string[] = [];
   for (let rowIndex = firstNonEmpty + 1; rowIndex < rows.length; rowIndex += 1) {
     const row = rows[rowIndex];
-    if (!Array.isArray(row) || isBlankRow(row)) continue;
+    if (!Array.isArray(row) || isBlankRow(row)) { removedEmptyRows += 1; continue; }
     if (records.length >= MAX_ROWS) throw new ImportError(`The file exceeds the ${MAX_ROWS.toLocaleString()} data row limit.`);
     if (row.length > MAX_COLUMNS) throw new ImportError(`Row ${rowIndex + 1} exceeds the ${MAX_COLUMNS} column limit.`);
     if (row.length > columns.length && row.slice(columns.length).some((value) => value != null && String(value).trim() !== '')) {
@@ -73,7 +75,7 @@ export function normalizeRows(rows: unknown[][]): Dataset {
     const remainder = longCellCount - longCellExamples.length;
     warnings.push(`${longCellCount} cell${longCellCount === 1 ? '' : 's'} exceed ${LONG_CELL_WARNING_CHARACTERS} characters (${longCellExamples.join('; ')}${remainder ? `; and ${remainder} more` : ''}).`);
   }
-  return { columns, records, warnings };
+  return { columns, records, warnings, importAudit: { sourceHeaders, removedEmptyRows } };
 }
 
 export function validateIdentifiers(dataset: Dataset, field: string): string[] {
