@@ -6,6 +6,13 @@ import { calculateLayout, inchesToMm, mmToInches } from './features/layout/pageL
 import { renderLabel, validateTemplate } from './features/labels/renderer';
 import { generatePdf } from './features/export/pdf';
 import { loadPreferences, savePreferences, type Preferences } from './features/preferences/store';
+import { UndoHistory } from './core/dataset';
+import { downloadFile } from './core/download';
+import type { PrintJob } from './core/printJob';
+import type { StudioPageProps, StudioView } from './studio/contracts';
+import { NAVIGATION, checkTemplateMapping, estimateSnapshot, transformedWorkspace, viewFromHash, type WorkspaceSnapshot } from './studio/workspace';
+import { PayloadPage } from './studio/pages/PayloadPage';
+import { ToolFrame } from './studio/ui';
 import './styles.css';
 
 const PAGE_PRESETS: Record<string, [number, number]> = { A4: [210, 297], A5: [148, 210], Letter: [215.9, 279.4] };
@@ -15,6 +22,12 @@ const PAGE_FIELDS: { key: keyof PageSettings; label: string }[] = [
 ];
 
 function App() {
+  const [view, setView] = useState<StudioView>(() => viewFromHash(window.location.hash));
+  const [templateName, setTemplateName] = useState('Current label');
+  const [lastJob, setLastJob] = useState<PrintJob | null>(null);
+  const history = useRef(new UndoHistory<WorkspaceSnapshot>(estimateSnapshot));
+  const [canUndo, setCanUndo] = useState(false);
+  const exportLock = useRef(false);
   const [preferences, setPreferences] = useState<Preferences>(() => loadPreferences());
   const [dataset, setDataset] = useState<Dataset | null>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -41,6 +54,40 @@ function App() {
   const previewVersion = useRef(0);
   const sheetVersion = useRef(0);
   const importVersion = useRef(0);
+
+  useEffect(() => {
+    const changed = () => setView(viewFromHash(window.location.hash));
+    window.addEventListener('hashchange', changed);
+    return () => window.removeEventListener('hashchange', changed);
+  }, []);
+  function navigate(next: StudioView) { window.location.hash = `/${next}`; setView(next); setError(''); }
+  function clearDatasetHistory() { history.current.clear(); setCanUndo(false); setLastJob(null); }
+  function restoreWorkspace(snapshot: WorkspaceSnapshot) {
+    setDataset(snapshot.dataset); setTemplate(snapshot.template); setPage(snapshot.page); setIdField(snapshot.idField);
+    setSelected(snapshot.selected); setHiddenFields(snapshot.hiddenFields); setPageNumber(0); setTablePage(0);
+  }
+  function commitDataset(next: Dataset, description: string, columnMap?: Record<string, string>) {
+    if (!dataset || busy || exportLock.current) throw new Error('Wait for the current operation before changing data.');
+    const current = { dataset, template, page, idField, selected, hiddenFields };
+    try {
+      const result = transformedWorkspace(current, next, columnMap);
+      history.current.push(current, description);
+      restoreWorkspace(result); setCanUndo(history.current.canUndo); setError('');
+    } catch (reason) { setError(reason instanceof Error ? reason.message : 'The data change could not be applied.'); throw reason; }
+  }
+  function undo() {
+    if (busy || exportLock.current) return;
+    const snapshot = history.current.pop();
+    if (snapshot) { restoreWorkspace(snapshot); setCanUndo(history.current.canUndo); setError(''); }
+  }
+  function applyTemplate(next: LabelTemplate, nextPage?: PageSettings, name?: string) {
+    if (busy || exportLock.current) throw new Error('Wait for the current operation before changing the label.');
+    checkTemplateMapping(next, dataset); validateTemplate(next);
+    if (nextPage) calculateLayout(next, nextPage, Math.max(1, chosenRecords.length));
+    setTemplate(next); setHiddenFields(new Set());
+    if (dataset?.columns.includes(next.code.field)) setIdField(next.code.field);
+    if (nextPage) setPage(nextPage); if (name) setTemplateName(name); setPageNumber(0);
+  }
 
 
   const chosenRecords = useMemo(() => dataset?.records.filter((record) => selected.has(record.id)) ?? [], [dataset, selected]);
@@ -117,7 +164,7 @@ function App() {
   async function importFile(nextFile: File, replaceBusy = false) {
     if ((busy || progress !== null) && !replaceBusy) return;
     const version = ++importVersion.current;
-    setError(''); setExportError(''); setDataset(null); setFile(nextFile); setSelected(new Set()); setSheets([]); setSheet('');
+    clearDatasetHistory(); setError(''); setExportError(''); setDataset(null); setFile(nextFile); setSelected(new Set()); setSheets([]); setSheet('');
     setBusy(true);
     try {
       const result = await inspectFile(nextFile);
@@ -152,7 +199,7 @@ function App() {
 
   async function chooseSheet(nextSheet: string) {
     const version = ++importVersion.current;
-    setSheet(nextSheet); setError(''); setDataset(null); setSelected(new Set()); setBusy(true);
+    clearDatasetHistory(); setSheet(nextSheet); setError(''); setDataset(null); setSelected(new Set()); setBusy(true);
     try { if (file) { const next = await readSheet(file, nextSheet); if (version === importVersion.current) applyDataset(next); } }
     catch (reason) { if (version === importVersion.current) setError(reason instanceof Error ? reason.message : 'Could not read this worksheet. Select another sheet or file.'); }
     finally { if (version === importVersion.current) setBusy(false); }
@@ -202,13 +249,14 @@ function App() {
   function removeSelected() {
     if (!dataset) return;
     const records = dataset.records.filter((record) => !selected.has(record.id));
-    setDataset({ ...dataset, records }); setSelected(new Set()); setPageNumber(0); setTablePage(0);
+    try { commitDataset({ ...dataset, records }, 'Remove selected rows'); } catch { /* The shared transaction presents the failure. */ }
   }
   function onFileChange(event: ChangeEvent<HTMLInputElement>) { const next = event.currentTarget.files?.[0]; if (next) void importFile(next); event.currentTarget.value = ''; }
   function onDrop(event: DragEvent<HTMLElement>) { event.preventDefault(); setDragging(false); const next = event.dataTransfer.files[0]; if (next && !busy && progress === null) void importFile(next); }
 
-  async function exportPdf() {
-    if (!dataset || !chosenRecords.length || !idField || noIdCount > 0 || templateError) return;
+  async function exportPdf(): Promise<PrintJob | null> {
+    if (exportLock.current || !dataset || !chosenRecords.length || (template.code.type !== 'none' && (!idField || noIdCount > 0)) || templateError || busy) return null;
+    exportLock.current = true;
     setExportError(''); setProgress(0);
     const controller = new AbortController(); setExportController(controller);
     try {
@@ -217,17 +265,15 @@ function App() {
       const pdfBuffer = sourceBuffer instanceof ArrayBuffer && bytes.byteOffset === 0 && bytes.byteLength === sourceBuffer.byteLength
         ? sourceBuffer
         : bytes.slice().buffer as ArrayBuffer;
-      const url = URL.createObjectURL(new Blob([pdfBuffer], { type: 'application/pdf' }));
-      const anchor = document.createElement('a');
       const now = new Date(); const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-      anchor.href = url; anchor.download = `asset-labels-${localDate}.pdf`;
-      document.body.appendChild(anchor); anchor.click(); anchor.remove();
-      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      downloadFile(pdfBuffer, 'application/pdf', `asset-labels-${localDate}.pdf`);
       setProgress(null);
+      return null;
     } catch (reason) {
       if (!controller.signal.aborted) setExportError(reason instanceof Error ? reason.message : 'PDF export failed. Check the page and label settings.');
       setProgress(null);
-    } finally { setExportController(null); }
+    } finally { exportLock.current = false; setExportController(null); }
+    return null;
   }
 
   function setDimension(key: 'widthMm' | 'heightMm' | 'paddingMm' | 'sizeMm' | 'barcodeHeightMm', displayed: number) {
@@ -241,6 +287,11 @@ function App() {
   function setPageDimension(key: 'widthMm' | 'heightMm', displayed: number) { updatePage({ [key]: preferences.unit === 'in' ? inchesToMm(displayed) : displayed, preset: 'Custom' }); }
   function setMargin(key: keyof PageSettings, displayed: number) { updatePage({ [key]: preferences.unit === 'in' ? inchesToMm(displayed) : displayed }); }
 
+  const studioProps: StudioPageProps = { dataset, selectedIds: selected, idField, template: effectiveTemplate, page, busy: busy || progress !== null, previewImage: previewData, lastJob,
+    onCommitDataset: commitDataset, onApplyTemplate: applyTemplate, onPageChange: next => { if (!exportLock.current) setPage(next); },
+    onIdentifierChange: field => { if (!exportLock.current && dataset?.columns.includes(field)) { setIdField(field); updateCode({ field }); } },
+    onNavigate: navigate, onUndo: undo, canUndo, onExportJob: exportPdf };
+
   return <div className="app-shell">
     <header className="topbar">
       <a className="brand" href="#top" aria-label="AssetTag Studio home"><span className="brand-mark" aria-hidden="true" /><span>AssetTag <b>Studio</b></span></a>
@@ -252,6 +303,12 @@ function App() {
     </header>
 
     <main className="workspace" id="top">
+      <nav className="studio-navigation" aria-label="Studio tools">{NAVIGATION.map(group => <div className="nav-group" key={group.group}><span>{group.group}</span><div>{group.items.map(item => <a key={item.view} href={`#/${item.view}`} aria-current={view === item.view ? 'page' : undefined}>{item.title}</a>)}</div></div>)}</nav>
+      {dataset && <div className="workspace-status"><span>{dataset.records.length.toLocaleString()} rows · {selected.size.toLocaleString()} selected · {templateName}</span><button className="secondary-button small-button" onClick={undo} disabled={!canUndo || studioProps.busy}>Undo {history.current.description}</button></div>}
+      {view !== 'asset-labels' && error && <p role="alert" className="alert error-alert">{error}</p>}
+      {progress !== null && view !== 'asset-labels' && <div className="alert info-alert" role="status">Preparing PDF {progress}% <button className="secondary-button" onClick={() => exportController?.abort()}>Cancel export</button></div>}
+      {exportError && view !== 'asset-labels' && <p role="alert" className="alert error-alert">{exportError}</p>}
+      {view === 'payload-builder' ? <PayloadPage {...studioProps} /> : view !== 'asset-labels' ? <ToolFrame title={NAVIGATION.flatMap(group => group.items).find(item => item.view === view)?.title ?? 'Studio'} description="This page is being integrated on the local expansion branch." ><p>The shared dataset and settings remain available in Asset labels.</p></ToolFrame> : <>
       <section className="intro-row"><div><div className="eyebrow">LOCAL-FIRST LABEL WORKSPACE</div><h1>Turn your asset list into<br /><span>print-ready labels.</span></h1><p>Choose your data, make a label, then export a sheet you can print at actual size.</p></div><div className="step-track" aria-label="Workflow"><span className={dataset ? 'done' : 'active'}><i>1</i> Data</span><b /><span className={dataset ? 'active' : ''}><i>2</i> Design</span><b /><span><i>3</i> Export</span></div></section>
 
       {!dataset ? <section className={`welcome-card ${dragging ? 'dragging' : ''}`} onDragOver={(event) => { event.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={onDrop}>
@@ -330,6 +387,7 @@ function App() {
             <section className="export-bar"><div><strong>Ready to print?</strong><span>{chosenRecords.length} labels · print at 100% / actual size</span>{progress !== null && <div className="progress-track" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}><span style={{ width: `${progress}%` }} /></div>}{exportError && <span className="export-error" role="alert">{exportError}</span>}</div><div className="export-actions">{progress !== null && <button className="secondary-button" onClick={() => exportController?.abort()}>Cancel</button>}<button className="primary-button export-button" disabled={!chosenRecords.length || noIdCount > 0 || !idField || Boolean(templateError) || Boolean(layoutError) || busy || progress !== null} onClick={() => void exportPdf()}>{progress !== null ? `Preparing PDF ${progress}%` : 'Download PDF ↓'}</button></div></section>
           </div>
         </div>
+      </>}
       </>}
     </main>
     <footer>AssetTag Studio <span>·</span> Your data stays in this browser session</footer>
