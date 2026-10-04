@@ -41,6 +41,8 @@ export function ExportToolsPage(props: Props) {
       const pdf = await generatePrintJobPdf(job, { signal: aborter.signal });
       if (aborter.signal.aborted || !mounted.current) return;
       const csv = fieldLensCsv(job, mapping);
+      await Promise.resolve();
+      if (aborter.signal.aborted || !mounted.current) return;
       downloadFile(pdf.slice().buffer as ArrayBuffer, 'application/pdf', 'fieldlens-labels.pdf');
       downloadFile(csv, 'text/csv;charset=utf-8', 'fieldlens-assets.csv');
       props.onPrintJobCompleted?.(job);

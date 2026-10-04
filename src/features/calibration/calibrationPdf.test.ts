@@ -15,4 +15,12 @@ describe('printer calibration sheet', () => {
   it.each([Number.NaN, Number.NEGATIVE_INFINITY, 0, 2_001])('rejects unsafe page height %s before ruler generation', async heightMm => {
     await expect(generateCalibrationPdf({ ...DEFAULT_PAGE, heightMm })).rejects.toThrow(/Page height/);
   });
+  it('rejects custom paper too small for readable calibration marks', async () => {
+    await expect(generateCalibrationPdf({ ...DEFAULT_PAGE, widthMm: 99 })).rejects.toThrow(/at least 100 × 80 mm/);
+    await expect(generateCalibrationPdf({ ...DEFAULT_PAGE, heightMm: 79 })).rejects.toThrow(/at least 100 × 80 mm/);
+  });
+  it('generates on the smallest supported paper size', async () => {
+    const bytes = await generateCalibrationPdf({ ...DEFAULT_PAGE, widthMm: 100, heightMm: 80 });
+    expect((await PDFDocument.load(bytes)).getPageCount()).toBe(1);
+  });
 });

@@ -27,6 +27,7 @@ export function validateTemplate(template: LabelTemplate): void {
   if (!['left', 'center', 'right'].includes(template.alignment)) throw new Error('Choose left, center, or right alignment.');
   if (template.mode !== undefined && !['asset', 'cable', 'location', 'code'].includes(template.mode)) throw new Error('Choose a supported label mode.');
   if (template.textLayout !== undefined && !['standard', 'mirrored'].includes(template.textLayout)) throw new Error('Choose a supported text layout.');
+  if (template.textLayout === 'mirrored' && template.widthMm / 2 < 10) throw new Error('Mirrored labels need a physical width of at least 20 mm so each side can render safely.');
   if (typeof template.border !== 'boolean') throw new Error('Label border setting must be on or off.');
   if (!Array.isArray(template.fields) || template.fields.length > MAX_FIELDS) {
     throw new Error(`A label can contain at most ${MAX_FIELDS} text fields.`);
@@ -55,7 +56,7 @@ export function validateTemplate(template: LabelTemplate): void {
     throw new Error('Payload placeholders need a column name, such as {Asset ID}.');
   }
   if (code.type === 'qr') {
-    finiteInRange(code.sizeMm, 'QR size', 8, Math.min(template.widthMm, template.heightMm));
+    finiteInRange(code.sizeMm, 'QR size', 8, Math.min(template.textLayout === 'mirrored' ? template.widthMm / 2 : template.widthMm, template.heightMm));
   } else {
     finiteInRange(code.barcodeHeightMm, 'Barcode height', 5, Math.min(40, template.heightMm));
     const scale = code.barcodeScale ?? 1;
@@ -123,31 +124,48 @@ function drawWrappedField(context: CanvasRenderingContext2D, field: LabelField, 
   return y;
 }
 
-function drawFields(context: CanvasRenderingContext2D, record: AssetRecord, template: LabelTemplate, x: number, y: number, width: number, bottom: number, canvasWidth: number, canvasHeight: number): void {
-  const drawSide = (sideX: number, sideWidth: number, sideY: number, sideBottom: number) => {
-    let nextY = sideY;
-    for (const field of template.fields) {
-      const value = readStringValue(record, field.source) ?? '';
-      if (value.length > 2_000 || field.label.length > 200) throw new Error(`Text for “${field.source}” is too long to render safely. Shorten the cell or label.`);
-      nextY = drawWrappedField(context, field, value, sideX, nextY, sideWidth, sideBottom, template.alignment);
-    }
-  };
-  if (template.textLayout !== 'mirrored') { drawSide(x, width, y, bottom); return; }
-  const halfWidth = width / 2;
-  drawSide(x, halfWidth, y, bottom);
-  context.save();
-  context.translate(canvasWidth, canvasHeight);
-  context.rotate(Math.PI);
-  drawSide(x, halfWidth, y, bottom);
-  context.restore();
+function drawFields(context: CanvasRenderingContext2D, record: AssetRecord, template: LabelTemplate, x: number, y: number, width: number, bottom: number): void {
+  let nextY = y;
+  for (const field of template.fields) {
+    const value = readStringValue(record, field.source) ?? '';
+    if (value.length > 2_000 || field.label.length > 200) throw new Error(`Text for “${field.source}” is too long to render safely. Shorten the cell or label.`);
+    nextY = drawWrappedField(context, field, value, x, nextY, width, bottom, template.alignment);
+  }
 }
 
 function pngDataUrl(canvas: HTMLCanvasElement): string {
   return canvas.toDataURL('image/png');
 }
 
+async function renderMirroredLabel(record: AssetRecord, template: LabelTemplate): Promise<string> {
+  const halfWidthMm = template.widthMm / 2;
+  const halfTemplate = { ...template, widthMm: halfWidthMm, textLayout: 'standard' as const };
+  const sideDataUrl = await renderLabel(record, halfTemplate);
+  const sideImage = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error('Could not prepare the mirrored label panels.'));
+    image.src = sideDataUrl;
+  });
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(template.widthMm * PIXELS_PER_MM);
+  canvas.height = Math.round(template.heightMm * PIXELS_PER_MM);
+  const context = canvasContext(canvas);
+  context.fillStyle = '#fff';
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  const panelWidth = Math.floor(canvas.width / 2);
+  context.drawImage(sideImage, 0, 0, sideImage.width, sideImage.height, 0, 0, panelWidth, canvas.height);
+  context.save();
+  context.translate(canvas.width, canvas.height);
+  context.rotate(Math.PI);
+  context.drawImage(sideImage, 0, 0, sideImage.width, sideImage.height, 0, 0, panelWidth, canvas.height);
+  context.restore();
+  return pngDataUrl(canvas);
+}
+
 export async function renderLabel(record: AssetRecord, template: LabelTemplate): Promise<string> {
   validateTemplate(template);
+  if (template.textLayout === 'mirrored') return renderMirroredLabel(record, template);
   let payload: string;
   try {
     payload = interpolatePayload(record, template);
@@ -201,7 +219,7 @@ export async function renderLabel(record: AssetRecord, template: LabelTemplate):
     const textX = x + side + pad;
     const textWidth = innerRight - textX;
     if (template.fields.length && textWidth <= 0) throw new Error('There is no room for text beside the QR code. Reduce QR size or padding.');
-    drawFields(context, record, template, textX, pad, textWidth, innerBottom, canvas.width, canvas.height);
+    drawFields(context, record, template, textX, pad, textWidth, innerBottom);
   } else if (template.code.type === 'code128') {
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     try {
@@ -247,10 +265,10 @@ export async function renderLabel(record: AssetRecord, template: LabelTemplate):
       context.fillText(payload, canvas.width / 2, textY + PIXELS_PER_MM * 3.5, barcodeWidth);
       textY += PIXELS_PER_MM * 4.5;
     }
-    drawFields(context, record, template, pad, textY, barcodeWidth, innerBottom, canvas.width, canvas.height);
+    drawFields(context, record, template, pad, textY, barcodeWidth, innerBottom);
     if (textY > innerBottom + 0.5) throw new Error('Barcode and text do not fit. Reduce the barcode height or font sizes, or increase label height.');
   } else {
-    drawFields(context, record, template, pad, pad, innerRight - pad, innerBottom, canvas.width, canvas.height);
+    drawFields(context, record, template, pad, pad, innerRight - pad, innerBottom);
   }
   return pngDataUrl(canvas);
 }

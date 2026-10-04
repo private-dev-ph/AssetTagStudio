@@ -3,6 +3,8 @@ import type { AssetRecord, LabelTemplate } from '../../types';
 import { DEFAULT_TEMPLATE } from '../../types';
 import { interpolatePayload, renderLabel, validateTemplate, wrapText } from './renderer';
 
+vi.mock('jsbarcode', () => ({ default: (svg: { setAttribute: (name: string, value: string) => void }) => { svg.setAttribute('width', '120'); svg.setAttribute('height', '64'); } }));
+
 const template: LabelTemplate = {
   ...DEFAULT_TEMPLATE,
   code: { ...DEFAULT_TEMPLATE.code, field: 'Asset ID' },
@@ -24,15 +26,49 @@ describe('label template and payload', () => {
     expect(() => validateTemplate({ ...textOnly, fields: [] })).toThrow(/text field/);
   });
 
-  it('draws mirrored wrap text twice in the two opposing readable areas', async () => {
+  it('renders mirrored labels into disjoint half-width panels, including optional codes', async () => {
     const fillText = vi.fn();
-    const context = { fillStyle: '', strokeStyle: '', lineWidth: 1, font: '', textAlign: 'left', fillRect: vi.fn(), strokeRect: vi.fn(), measureText: (text: string) => ({ width: text.length * 3 }), fillText, save: vi.fn(), translate: vi.fn(), rotate: vi.fn(), restore: vi.fn() } as unknown as CanvasRenderingContext2D;
-    vi.stubGlobal('document', { createElement: () => ({ width: 0, height: 0, getContext: () => context, toDataURL: () => 'data:image/png;base64,AA==' }) });
+    const drawImage = vi.fn();
+    const translate = vi.fn();
+    const rotate = vi.fn();
+    const canvases: Array<{ width: number; height: number }> = [];
+    const context = { fillStyle: '', strokeStyle: '', lineWidth: 1, font: '', textAlign: 'left', fillRect: vi.fn(), strokeRect: vi.fn(), measureText: (text: string) => ({ width: text.length * 3 }), fillText, drawImage, save: vi.fn(), translate, rotate, restore: vi.fn() } as unknown as CanvasRenderingContext2D;
+    vi.stubGlobal('document', {
+      createElement: () => { const canvas = { width: 0, height: 0, getContext: () => context, toDataURL: () => 'data:image/png;base64,AA==' }; canvases.push(canvas); return canvas; },
+      createElementNS: () => { const attrs: Record<string, string> = {}; return { setAttribute: (name: string, value: string) => { attrs[name] = value; }, getAttribute: (name: string) => attrs[name] ?? null }; },
+    });
+    vi.stubGlobal('XMLSerializer', class { serializeToString() { return '<svg/>'; } });
+    vi.stubGlobal('Image', class {
+      width = 280;
+      height = 144;
+      onload: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      set src(value: string) { if (value.startsWith('data:image/svg')) { this.width = 120; this.height = 64; } this.onload?.(); }
+    });
     const cable: LabelTemplate = { ...template, mode: 'cable', textLayout: 'mirrored', widthMm: 70, heightMm: 18, paddingMm: 1, fields: [{ source: 'From', label: '', fontSize: 5, bold: true }], code: { ...template.code, type: 'none', field: '' } };
     await renderLabel({ id: 'cable', values: { From: 'SW01 → SERVER01' } }, cable);
-    expect(fillText).toHaveBeenCalledTimes(2);
-    expect(context.translate).toHaveBeenCalledWith(70 * 8, 18 * 8);
-    expect(context.rotate).toHaveBeenCalledWith(Math.PI);
+    expect(fillText).toHaveBeenCalledTimes(1);
+    expect(canvases.map(({ width, height }) => [width, height])).toEqual([[280, 144], [560, 144]]);
+    expect(drawImage).toHaveBeenCalledTimes(2);
+    expect(drawImage.mock.calls[0]?.slice(5)).toEqual([0, 0, 280, 144]);
+    expect(drawImage.mock.calls[1]?.slice(5)).toEqual([0, 0, 280, 144]);
+    expect(translate).toHaveBeenCalledWith(560, 144);
+    expect(rotate).toHaveBeenCalledWith(Math.PI);
+
+    for (const code of [
+      { ...template.code, type: 'qr' as const, field: 'Asset ID', sizeMm: 10 },
+      { ...template.code, type: 'code128' as const, field: 'Asset ID', barcodeHeightMm: 8 },
+    ]) {
+      drawImage.mockClear();
+      await renderLabel(record, { ...cable, code });
+      expect(drawImage).toHaveBeenCalledTimes(code.type === 'code128' ? 3 : 2);
+      const panelCalls = drawImage.mock.calls.slice(-2);
+      expect(panelCalls.map(call => call.slice(5))).toEqual([[0, 0, 280, 144], [0, 0, 280, 144]]);
+      const leftPanel = [0, 280] as const;
+      const rightPanel = [280, 560] as const;
+      expect(leftPanel[1]).toBeLessThanOrEqual(rightPanel[0]);
+      expect(rightPanel[1]).toBe(560);
+    }
   });
 
   it('renders a seven-level location hierarchy through the label preview renderer', async () => {

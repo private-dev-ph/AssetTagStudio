@@ -41,8 +41,8 @@ export function SpecialLabelsPage(props: Props) {
     const codeField = mode === 'code' ? columns.value ?? '' : mode === 'location' ? hierarchy[0] ?? '' : columns.source ?? '';
     return {
       ...DEFAULT_TEMPLATE,
-      widthMm: Math.max(10, Math.min(200, Number(widthInput) || 10)),
-      heightMm: Math.max(10, Math.min(200, Number(heightInput) || 10)),
+      widthMm: Number(widthInput),
+      heightMm: Number(heightInput),
       paddingMm: 2, border: true, alignment: 'center' as const, mode,
       textLayout: mirrored ? 'mirrored' as const : 'standard' as const,
       fields,

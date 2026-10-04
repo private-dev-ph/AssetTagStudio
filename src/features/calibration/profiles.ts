@@ -3,7 +3,7 @@ import { clearEntries, deleteEntry, listEntries, putEntry } from '../storage/lib
 export const ACTIVE_PRINTER_KEY = 'asset-tag-studio.active-printer.v1';
 export type PrinterProfile = { id: string; name: string; offsetXMm: number; offsetYMm: number };
 export type PrinterLibraryEntry = { id: string; name: string; json: string };
-const MAX_NAME = 120;
+const MAX_NAME = 100;
 export const MAX_PROFILE_BYTES = 10_000;
 
 function validateName(name: unknown): asserts name is string {

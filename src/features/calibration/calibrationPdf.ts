@@ -7,6 +7,20 @@ export function validateCalibrationPage(page: PageSettings): void {
   for (const [name, value] of [['Page width', page.widthMm], ['Page height', page.heightMm]] as const) {
     if (!Number.isFinite(value) || value <= 0 || value > 2_000) throw new Error(`${name} must be finite and between 0 and 2,000 mm.`);
   }
+  if (page.widthMm < 100 || page.heightMm < 80) throw new Error('Calibration sheets need paper at least 100 × 80 mm so the title, reference box, rulers, and instructions remain readable.');
+}
+
+function wrapPdfText(text: string, maxWidth: number, font: Awaited<ReturnType<PDFDocument['embedFont']>>, size: number): string[] {
+  const lines: string[] = [];
+  let line = '';
+  for (const word of text.split(/\s+/)) {
+    const candidate = line ? `${line} ${word}` : word;
+    if (font.widthOfTextAtSize(candidate, size) <= maxWidth) { line = candidate; continue; }
+    if (line) lines.push(line);
+    line = word;
+  }
+  if (line) lines.push(line);
+  return lines;
 }
 export async function generateCalibrationPdf(page: PageSettings): Promise<Uint8Array> {
   validateCalibrationPage(page);
@@ -43,15 +57,21 @@ export async function generateCalibrationPdf(page: PageSettings): Promise<Uint8A
     sheet.drawLine({ start: { x: mm(rulerX), y }, end: { x: mm(rulerX - (major ? 4 : 1.5)), y }, thickness: 0.45, color: black });
     if (major) sheet.drawText(String(tick - inset), { x: mm(rulerX - 11), y: y - 2, size: 7, font, color: black });
   }
-  const box = Math.min(100, page.widthMm - 2 * inset, page.heightMm - 2 * inset - 34);
+  const box = Math.min(100, page.widthMm - 70, page.heightMm - 60);
   if (box > 15) {
     const x = (page.widthMm - box) / 2;
     const y = (page.heightMm - box) / 2;
     sheet.drawRectangle({ x: mm(x), y: height - mm(y + box), width: mm(box), height: mm(box), borderColor: black, borderWidth: 0.8 });
-    sheet.drawText(`${box.toFixed(1)} mm reference box`, { x: mm(x + 2), y: height - mm(y + box / 2), size: 9, font, color: black });
+    const dimension = `${box.toFixed(1)} mm`;
+    const dimensionWidth = mm(box - 4);
+    const dimensionSize = Math.max(5, Math.min(9, dimensionWidth / font.widthOfTextAtSize(dimension, 1)));
+    sheet.drawText(dimension, { x: mm(x + 2), y: height - mm(y + box / 2), size: dimensionSize, font, color: black, maxWidth: dimensionWidth });
   }
-  sheet.drawText('PRINTER CALIBRATION — print at 100% / Actual Size', { x: mm(inset), y: height - mm(18), size: 12, font, color: black });
-  sheet.drawText('Measure the center cross and corner marks against the printed page. Enter the measured X/Y shift in Printer Calibration.', { x: mm(inset), y: mm(10), size: 8, font, color: black, maxWidth: width - mm(inset * 2) });
-  sheet.drawText('Ruler ticks are 1 mm apart; numbered marks are 10 mm apart.', { x: mm(inset), y: mm(5), size: 7, font, color: black });
+  const title = 'PRINTER CALIBRATION — print at 100% / Actual Size';
+  const innerWidth = width - mm(inset * 2);
+  const titleSize = Math.max(7, Math.min(12, innerWidth / font.widthOfTextAtSize(title, 1)));
+  sheet.drawText(title, { x: mm(inset), y: height - mm(18), size: titleSize, font, color: black, maxWidth: innerWidth });
+  const instructions = wrapPdfText('Measure the center cross and corner marks against the printed page. Enter the measured X/Y shift in Printer Calibration. Ruler ticks are 1 mm apart; numbered marks are 10 mm apart.', innerWidth, font, 7);
+  instructions.forEach((line, index) => sheet.drawText(line, { x: mm(inset), y: mm(7 + (instructions.length - index - 1) * 3.2), size: 7, font, color: black }));
   return doc.save();
 }
