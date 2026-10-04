@@ -159,9 +159,12 @@ test('template library imports strictly, renames without replacing settings, dup
 
 test('template library enforces 100 entries and offers explicit template-only recovery for corrupt storage', async ({ page }) => {
   test.setTimeout(60_000);
-  await loadCsv(page, 'library-capacity.csv', 'Asset ID,Name\nLIB-1,Router\n');
+  await loadCsv(page, 'library-capacity.csv', 'Asset ID,Asset Name,Location\nLIB-1,Router,North Wing\n');
   await openView(page, 'templates');
   await page.getByRole('button', { name: 'Standard Asset Tag' }).click();
+  await page.getByLabel('Asset ID').selectOption('Asset ID');
+  await page.getByLabel('Asset Name').selectOption('Asset Name');
+  await page.getByLabel('Location').selectOption('Location');
   await page.getByRole('button', { name: 'Apply template' }).click();
   await page.getByLabel('Template name').fill('Capacity seed');
   await page.getByRole('button', { name: 'Save current settings' }).click();
@@ -187,6 +190,9 @@ test('template library enforces 100 entries and offers explicit template-only re
   }, seedJson);
 
   await page.getByRole('button', { name: 'Standard Asset Tag' }).click();
+  await page.getByLabel('Asset ID').selectOption('Asset ID');
+  await page.getByLabel('Asset Name').selectOption('Asset Name');
+  await page.getByLabel('Location').selectOption('Location');
   await page.getByRole('button', { name: 'Apply template' }).click();
   await page.getByLabel('Template name').fill('One too many');
   await page.getByRole('button', { name: 'Save current settings' }).click();
@@ -218,6 +224,32 @@ test('template library enforces 100 entries and offers explicit template-only re
   const recovered = await readLibrary(page);
   expect(recovered.templates).toHaveLength(0);
   expect(recovered.printers).toEqual([{ id: 'keep-printer', name: 'Preserved printer profile', json: '{}' }]);
+});
+
+test('template library reports quota failures and leaves no partial save', async ({ page }) => {
+  await page.addInitScript(() => {
+    const scope = window as Window & { failTemplateWrite?: boolean };
+    const originalPut = IDBObjectStore.prototype.put;
+    IDBObjectStore.prototype.put = function (this: IDBObjectStore, ...args: Parameters<IDBObjectStore['put']>) {
+      if (this.name === 'templates' && scope.failTemplateWrite) {
+        throw new DOMException('Quota exceeded by browser test', 'QuotaExceededError');
+      }
+      return originalPut.apply(this, args);
+    };
+  });
+  await loadCsv(page, 'quota-template.csv', 'Asset ID,Asset Name,Location\nQUOTA-1,Switch,Network Closet\n');
+  await openView(page, 'templates');
+  await page.getByRole('button', { name: 'Standard Asset Tag' }).click();
+  await page.getByLabel('Asset ID').selectOption('Asset ID');
+  await page.getByLabel('Asset Name').selectOption('Asset Name');
+  await page.getByLabel('Location').selectOption('Location');
+  await page.getByRole('button', { name: 'Apply template' }).click();
+  await page.getByLabel('Template name').fill('Quota failure template');
+  await page.evaluate(() => { (window as Window & { failTemplateWrite?: boolean }).failTemplateWrite = true; });
+  await page.getByRole('button', { name: 'Save current settings' }).click();
+  await expect(page.getByRole('alert')).toContainText(/browser storage is full/i);
+  await page.evaluate(() => { (window as Window & { failTemplateWrite?: boolean }).failTemplateWrite = false; });
+  expect((await readLibrary(page)).templates).toHaveLength(0);
 });
 
 test('payload builder encodes URL columns and rejects missing references and dense QR payloads', async ({ page }) => {
