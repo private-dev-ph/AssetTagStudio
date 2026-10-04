@@ -50,3 +50,5 @@ Cloudflare signed-in Pages GitHub setup is unsaved. Existing integration authori
 2. Inspect GitHub CI; select web-deployment in Cloudflare draft, deploy, add custom domain, verify HTTPS, headers and live CSV/Excel/QR/Code128/PDF/privacy paths.
 3. Record verified URL in README/showcase/deployment docs, final security/progress/handoff results, commit and push documentation; verify final deployment/CI and exact final SHA.
 4. Provide the requested structured report and evidence-based confidence rating.
+
+Live smoke found misleading preview-limit copy on partial sheets. Workspace branch now fixes actual-record counting and covers small and capped pages;2 focused production tests/types/lint/build passed. Integrate this fix, run final16-browser suite, then publish updated branch.

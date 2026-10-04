@@ -71,6 +71,7 @@ function App() {
     const start = pageNumber * pageLayout.labelsPerPage;
     return chosenRecords.slice(start, start + pageLayout.labelsPerPage).slice(0, 36);
   }, [chosenRecords, pageLayout, pageNumber]);
+  const labelsOnPreviewPage = pageLayout ? Math.min(pageLayout.labelsPerPage, Math.max(0, chosenRecords.length - pageNumber * pageLayout.labelsPerPage)) : 0;
   const selectedPreview = previewRecords[0] ?? chosenRecords[0] ?? null;
   const [sheetImages, setSheetImages] = useState<Record<string, string>>({});
   const [sheetPreviewError, setSheetPreviewError] = useState('');
@@ -322,7 +323,7 @@ function App() {
                 <div className="label-preview-row"><div className="single-preview" style={{ width: `${Math.min(400, Math.max(190, template.widthMm * 2.6))}px`, aspectRatio: `${template.widthMm} / ${template.heightMm}` }} aria-label="Rendered label preview">
                   {previewData ? <img src={previewData} alt={`Rendered label for ${selectedPreview?.values[idField] ?? ''}`} /> : previewError ? <span className="preview-error">{previewError}</span> : <span className="loading-placeholder">Drawing label…</span>}
                 </div><div className="preview-caption"><span>Single label</span><b>{selectedPreview?.values[idField] || selectedPreview?.id}</b><small>{template.widthMm} × {template.heightMm} mm</small></div></div>
-                {pageLayout && pageLayout.labelsPerPage > previewRecords.length && <p className="preview-limit-note">Showing the first {previewRecords.length} labels in the sheet preview for performance. The PDF includes all {pageLayout.labelsPerPage} labels on this page.</p>}
+                {labelsOnPreviewPage > previewRecords.length && <p className="preview-limit-note">Showing the first {previewRecords.length} labels in the sheet preview for performance. The PDF includes all {labelsOnPreviewPage} labels on this page.</p>}
                 <div className="pagination"><button className="icon-button" aria-label="Previous preview page" disabled={pageNumber <= 0} onClick={() => setPageNumber((value) => Math.max(0, value - 1))}>←</button><span>Preview page <b>{Math.min(pageNumber + 1, Math.max(1, pages))}</b> of {Math.max(1, pages)}</span><button className="icon-button" aria-label="Next preview page" disabled={pageNumber >= pages - 1} onClick={() => setPageNumber((value) => Math.min(pages - 1, value + 1))}>→</button></div>
               </>}
             </section>

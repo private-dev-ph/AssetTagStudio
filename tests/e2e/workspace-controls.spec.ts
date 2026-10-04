@@ -1,5 +1,20 @@
 import { expect, test } from '@playwright/test';
 
+test('preview note reports filled labels rather than page capacity', async ({ page }) => {
+  await page.goto('/');
+  const csv = ['Asset ID,Name', ...Array.from({ length: 80 }, (_, i) => `TEST-${i + 1},Unit ${i + 1}`)].join('\n');
+  await page.getByLabel('Choose a CSV or Excel file').setInputFiles({ name: 'preview.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+  await expect(page.getByText('80 rows · 2 columns')).toBeVisible();
+  await expect(page.locator('.preview-limit-note')).toHaveCount(0);
+  await page.getByLabel('Paper size', { exact: true }).selectOption('Custom');
+  await page.getByLabel('Paper width', { exact: true }).fill('420');
+  await page.getByLabel('Paper height', { exact: true }).fill('594');
+  await expect(page.locator('.preview-limit-note')).toContainText('The PDF includes all 80 labels on this page.');
+  await expect(page.locator('.paper-label')).toHaveCount(36);
+  await page.getByLabel('Paper size', { exact: true }).selectOption('A4');
+  await expect(page.locator('.preview-limit-note')).toHaveCount(0);
+});
+
 test('table filters, sorting and removal keep the selected output explicit', async ({ page }) => {
   await page.goto('/');
   await page.getByLabel('Choose a CSV or Excel file').setInputFiles({ name: 'controls.csv', mimeType: 'text/csv', buffer: Buffer.from('asset_id,name\nB-2,Second\nA-1,First\nC-3,Third\n') });
