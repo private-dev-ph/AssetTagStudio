@@ -1,0 +1,7 @@
+# PDF generation
+
+`generatePdf(records, template, page, options)` validates the page, template, label fit, and 20,000-record limit before creating the document. It places each rendered PNG at its exact millimeter dimensions, using the canonical row-major positions from `calculateLayout`. A PDF page uses the requested physical page dimensions. Print at 100% or “actual size” so labels retain their dimensions.
+
+Generation reports `(completed, total)` initially at zero and after batches of 24 labels. It yields between batches so browser controls can respond and checks the supplied `AbortSignal` before work and between batches. Cancellation rejects with an `AbortError`; the caller should discard the incomplete result. Rendering, QR creation, barcode rasterization, and final PDF serialization still take real time, especially for large unique datasets. A 20,000-label PDF can be slow and large; progress reports reflect completed labels, not a completion-time estimate.
+
+Repeated label images and rendered labels use bounded caches. Caches reduce work for duplicates but do not remove the memory needed by the final PDF. An empty record list is rejected with an instruction to add records first. The UI is responsible for creating, downloading, and revoking the PDF object URL.
