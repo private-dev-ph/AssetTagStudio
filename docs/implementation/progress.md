@@ -25,3 +25,11 @@ Completed deployed-suite support: verification-hardening merged in 372d90f. PLAY
 Live verification on 372d90f: 15/16 passed including CSV/XLSX/XLS, QR/Code128 PDF downloads, 834-page boundary and error paths. Privacy check caught a Cloudflare Web Analytics script injected only on the custom-domain zone (provider mirror clean). No inventory POST/value URL detected. The initial privacy failure was resolved by the scoped provider rule below.
 
 Hosted milestone complete: 16/16 after hostname-scoped Disable RUM rule 40df1295ed1e4564be60aee5c2d8ed5a, privacy 1/1 focused, app HTML no beacon, portfolio beacon retained. GitHub372d90f CI 64 unit/16 Chromium/build/audit 0 passed. No required implementation or deployment work remains. Final document-only pipeline results are recorded in the final report.
+
+## Post-release sample-data request
+
+| Milestone / feature | Feature branch | Status | Related files | Latest relevant commit / tests | Unresolved issues / dependencies | Merge |
+|---|---|---|---|---|---|---|
+| Synthetic manual test pack and deferred roadmap | sample-test-datasets | Ready to merge | scripts/generate-test-datasets.*, tests/sample-datasets.test.ts, docs/test-data/README.md, docs/roadmap.md, README/package scripts | Based on fd0900a; full 100/100 unit (36 new checks), types/lint/build pass; archive checksums verified | No application/runtime changes; 30 generated fixtures ignored and remain local; unique export stress not benchmarked | Pending |
+
+2026-10-04: Generated 30 files / 27,108,825 input bytes; ZIP 842,718 bytes with all file-size/SHA-256 checks matching the manifest. Independent read-only review found no material correctness/security issue. Existing sandbox esbuild parent scan failed; authorized elevated npm test/build passed. No dependency changes. Production bundle remains index-DpM43OgR.js, so existing hosted/browser behavior is unchanged.
