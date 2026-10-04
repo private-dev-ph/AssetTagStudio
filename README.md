@@ -77,4 +77,3 @@ Saved templates, logo/image fields, additional symbologies, printer profiles, of
 ## License
 
 No project license has been chosen by the repository owner. Third-party notices are in [public/third-party-notices.txt](public/third-party-notices.txt); those notices do not grant a license to this project.
-

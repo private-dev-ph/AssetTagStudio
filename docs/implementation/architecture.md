@@ -23,3 +23,5 @@ The repository started with only .gitattributes; there are no existing APIs, use
 ## Acceptance boundaries
 
 CSV/XLSX/XLS imports, sheet selection, header/identifier diagnostics, bounded table with search/sort/select/remove; QR raw/template payload and Code128; field selection/reordering/font/bold/prefix/alignment/border/padding; page and label presets/custom sizing/units/margins/gaps; paginated preview; multi-page PDF/progress/cancel; demo/template/theme; accessibility; CI/static deployment config; unit + browser failure tests; documentation/portfolio artifacts. Live publishing requires available provider permissions and is not to be represented as complete without a verified URL.
+
+After worker structured clone, value maps may have ordinary prototypes; own-property lookup in renderer and PDF cache keys preserves the special-header safety boundary. Workspace persists complete template plus hidden header names, freezes mutators during export and clears stale data on failed sheet choice. PDF image.embed runs eagerly to release decoded channels; compressed final PDF memory remains proportional to output.

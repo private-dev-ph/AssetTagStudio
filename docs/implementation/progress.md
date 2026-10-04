@@ -22,3 +22,5 @@ Verification milestone ready:64unit +15productionbrowser tests pass, types/lint/
 Workspace visual follow-up410da15: Complete; checkbox/caption/mobile CSS and bounded-toggle regression, types/lint/build and1 built-app browser test passed. Merged inebd4333. Refreshed media and final15-browser run pending.
 
 Portfolio49edd99: Ready to merge; README/5ADRs/40-package notices,5screenshots/9.6s GIF/11-page A4 PDF/capture scripts. Lint,syntax,JSON/link checks and visual/PDF inspection passed. Independent supplemental security review found no sensitive artifact/script concern. Live URL remains pending.
+
+Portfolio49edd99 merged in95cac68: Complete; documentation/media/licenses reviewed. All nine feature branch tips verified as ancestors of web-deployment. Final integrated suite running; deployment pending.

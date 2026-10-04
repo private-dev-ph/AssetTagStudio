@@ -25,3 +25,5 @@ Dedicated independent source review completed on web-deployment at 71f5616, with
 - Final production/browser and live-header results will be added after remaining integration and deployment.
 
 Resource limits and print/output limitations are accepted because parsing/export are user-triggered local operations, input and caches are bounded, cancellation/timeout and recoverable errors are provided, and the remaining limits are explained in import-format.md and pdf-generation.md. They must not be advertised as a strict hostile-file sandbox or unlimited export capacity.
+
+Supplemental review of capture scripts, synthetic media/PDF, ADRs and notices found no sensitive-data, network, dependency or artifact concern. Root reviewed CSS410da15: no security behavior changed. All feature work is integrated in95cac68; final suite/live-header checks pending.
