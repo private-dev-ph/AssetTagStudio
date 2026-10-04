@@ -130,7 +130,10 @@ describe('XLSX ZIP preflight', () => {
     expect(() => preflightXlsxZip(concatBytes([valid, new Uint8Array([0])]).buffer as ArrayBuffer)).toThrow(/end-of-central-directory/);
     const forgedRecord = new Uint8Array(22);
     write32(forgedRecord, 0, 0x06054b50);
-    expect(() => preflightXlsxZip(makeZip([{ name: 'a' }], forgedRecord))).toThrow(/archive comments are not supported/);
+    expect(() => preflightXlsxZip(makeZip([{ name: 'a' }], forgedRecord))).toThrow(/Unsafe or unsupported XLSX ZIP archive/);
+    const multiDisk = new Uint8Array(makeZip([{ name: 'a' }]));
+    new DataView(multiDisk.buffer).setUint16(multiDisk.length - 22 + 4, 1, true);
+    expect(() => preflightXlsxZip(multiDisk.buffer as ArrayBuffer)).toThrow(/multi-disk/);
   });
 
   it('rejects mismatched local sizes, CRC, flags, methods, and names', () => {
@@ -143,7 +146,7 @@ describe('XLSX ZIP preflight', () => {
 
   it('rejects forged expansion, per-member, total, entry-count, and ratio limits', () => {
     const memberUncompressed = 16 * 1024 * 1024 + 1;
-    expect(issue([{ name: 'large', method: 8, compressedSize: 17_000, uncompressedSize: memberUncompressed }])).toMatch(/per-member/);
+    expect(issue([{ name: 'large', method: 8, compressedSize: 17_000, uncompressedSize: memberUncompressed }])).toMatch(/16 MiB uncompressed limit/);
     const totals = Array.from({ length: 5 }, (_, index) => ({ name: `f${index}`, method: 8, compressedSize: 14_000, uncompressedSize: 13 * 1024 * 1024 }));
     expect(issue(totals)).toMatch(/total uncompressed/);
     expect(issue(Array.from({ length: 2_049 }, (_, index) => ({ name: `f${index}` })))).toMatch(/more than 2048 entries/);
@@ -155,7 +158,7 @@ describe('XLSX ZIP preflight', () => {
     expect(issue([{ name: 'zip64', extra: zip64 }])).toMatch(/ZIP64/);
     expect(issue([{ name: 'zip64-local', localExtra: zip64 }])).toMatch(/ZIP64/);
     expect(issue([{ name: 'stream', flags: 8, compressedSize: 2, uncompressedSize: 4 }])).toMatch(/data descriptors/);
-    expect(issue([{ name: 'one' }, { name: 'two', offsetOverride: 0 }])).toMatch(/overlap/);
+    expect(issue([{ name: 'one' }, { name: 'one', offsetOverride: 0 }])).toMatch(/overlap/);
     expect(issue([{ name: 'empty-deflate', method: 8, compressedSize: 1, uncompressedSize: 0 }])).toMatch(/unknown or zero local uncompressed/);
   });
 

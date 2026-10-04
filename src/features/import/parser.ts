@@ -5,6 +5,7 @@ import { MAX_COLUMNS, MAX_FILE_BYTES, MAX_ROWS } from './limits';
 import { ImportError } from './errors';
 import { normalizeRows } from './normalize';
 import { preflightXlsxZip } from './zipPreflight';
+import { preflightXlsCfb } from './cfbPreflight';
 
 export { MAX_CELL_CHARACTERS, MAX_COLUMNS, MAX_FILE_BYTES, MAX_ROWS } from './limits';
 export { ImportError } from './errors';
@@ -74,8 +75,10 @@ function workbookFromBuffer(buffer: ArrayBuffer): XLSX.WorkBook {
   if (!isZipWorkbook && !isLegacyWorkbook) throw new ImportError('The file does not have a valid XLSX or XLS workbook signature.');
   try {
     if (isZipWorkbook) preflightXlsxZip(buffer);
+    else preflightXlsCfb(buffer);
     return XLSX.read(buffer, { type: 'array', sheetRows: MAX_ROWS + 2, cellFormula: true });
   } catch (error) {
+    if (error instanceof ImportError) throw error;
     const detail = error instanceof Error ? error.message : 'unknown workbook error';
     throw new ImportError(`Could not read the Excel workbook: ${detail}`);
   }
