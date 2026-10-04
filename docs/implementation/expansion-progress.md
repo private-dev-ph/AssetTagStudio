@@ -22,3 +22,11 @@ All twelve requested features implemented and locally verified on feature-expans
 | Final verification / security / docs | feature-expansion | Complete | report, security, handoff, README | 4388d76 | Final175/175 unit (24 files), type/lint/build;33/33 Edge; audit0; secret0; all10 branch tips ancestors | Clean-installed final build passes; final documentation committed at checkpoint completion | All source integrated |
 
 Resolved failures are retained in the report/security history: duplicated selection status, Health accessible name, inaccurate density/CSV/mapping fixtures, synchronous quota exception propagation and worker startup timing. No test removed, suppressed or weakened. Vite large-bundle and unsupported development ESLint warnings retained as follow-up. Hardware, cross-browser and receiver ingestion gaps are explicitly documented; they do not represent omitted exporter/tool implementation.
+
+## User testing follow-up — 2026-10-05
+
+| Milestone / feature | Feature branch | Status | Related files | Latest relevant commit | Tests completed | Dependencies / unresolved issues | Merge status |
+|---|---|---|---|---|---|---|---|
+| Readable text-only cable wraps, Health tables, themed scrollbars and privacy/footer | polish-workspace-interface | Ready to merge | renderer, SpecialLabelsPage, styles, App | 2773dc0 / d1d4344; dependency merge7bbb0e7 | Renderer10/10; five new Edge regressions pass (four combined + corrected ID selector rerun); full181 unit/type/lint/build pass | Independent review findings closed; hardware/cross-browser gap retained | Pending final integration |
+| ID eligibility guidance and bounded serial batches | improve-data-tool-batches | Complete | DataToolsPage, selection helper/tests | a1cd2a7 /895f962 | Root verified18/18 focused and181 full unit; real20k batch boundary/apply/undo and two IDbatches Edge pass | Explicit overwrite and same-Apply batch/sequence continuity verified |7bbb0e7 into interface branch; integration pending |
+| Follow-up integrated verification | feature-expansion | Not started | browser tests, implementation docs | Base04d115e | Pending focused and full local checks | Main/live app stay unchanged | Pending |

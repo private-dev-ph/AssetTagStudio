@@ -10,6 +10,8 @@ The current PDF generator supports up to 20,000 records. Each record produces on
 
 The shared template supports QR, Code 128, and text-only labels. Cable presets map source, port, and destination into a configurable narrow label and can render mirrored text for a wrap; their preview shows at most 36 selected rows through the shared renderer. Location presets map up to seven hierarchy columns into a readable high-contrast label and use `location://site/...` payloads through the common URI resolver. Optional code generation keeps the common renderer, layout, and PDF export path.
 
+Text fields explicitly use black ink, including text-only cable wraps and barcodes with their readable code text hidden. A mirrored wrap contains two complete panels; the second is rotated180 degrees. Preview images keep their physical aspect ratio and fit the page at phone widths. Browser regression tests check interior ink in both panels and decode the optional QR instead of counting borders as visible content.
+
 ## Printer calibration
 
 Sheet calibration offsets are millimeters and default to zero. Layout calculation applies the offsets to every sheet origin and rejects any offset that would clip a label beyond the physical page. Printer profile JSON is versioned and strict; it contains only a name and X/Y settings. Profiles use the shared IndexedDB `printers` store, while the active profile ID uses local storage. Oversized profile files are rejected before reading, and the UI offers explicit clear-and-recover after any initial printer-library load failure, including overflow. No imported rows are included.

@@ -24,6 +24,9 @@ describe('ID generator', () => {
     expect(changed.records[1]?.values['Asset ID']).toBe('NEW-2026-001');
     expect(dataset.records[1]?.values['Asset ID']).toBe('KEEP');
   });
+  it('does not target populated selected rows with the safe blank-only defaults', () => {
+    expect(previewIds(dataset, { ...options, selectedIds: new Set(['r2']) })).toEqual([]);
+  });
   it('rejects missing interpolation columns and unsafe empty token shapes', () => {
     expect(() => previewIds(dataset, { ...options, pattern: '{missing}' })).toThrow(/not a dataset column/);
     expect(() => previewIds(dataset, { ...options, pattern: '{}' })).toThrow(/Use tokens/);

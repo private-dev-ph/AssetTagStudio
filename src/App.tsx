@@ -398,7 +398,16 @@ function App() {
       </>}
       </>}
     </main>
-    <footer>AssetTag Studio <span>·</span> Your data stays in this browser session</footer>
+    <footer className="site-footer">
+      <p className="footer-privacy">Your asset data stays on your device. AssetTag Studio never uploads or collects it.</p>
+      <p>Records stay in memory while this page is open. Preferences, saved templates and printer profiles are stored only on this device.</p>
+      <nav aria-label="Project links">
+        <span>AssetTag Studio</span>
+        <a href="https://github.com/private-dev-ph" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="https://zachcodes.dev" target="_blank" rel="noopener noreferrer">Portfolio</a>
+        <a href="/LICENSE.txt" target="_blank" rel="noopener noreferrer">Apache License 2.0</a>
+      </nav>
+    </footer>
   </div>;
 }
 

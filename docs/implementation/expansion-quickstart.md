@@ -17,3 +17,9 @@ Run `npm ci --ignore-scripts` and `npm run dev` on `feature-expansion`; open the
 Limits: ID preview5,000 selected rows; serial preview2,000; visible transformation preview200; rendered batch preview36; imports20,000 rows/100columns/10MiB; code payload2,000 characters; undo8entries/24MiB; each local library100items. Image inspection10MiB/8MP with a five-second decode worker deadline. Worker timeouts and export cancellation surface recoverable errors. Physical printer/scanner/camera validation remains a hardware follow-up.
 
 Corrupt settings libraries offer an explicit reset for that library only. Storage failures report an error; inventory is never automatically written into these libraries. Browser settings documents can contain literal user-authored text/payloads, so treat exported templates as your own local files.
+
+## Test generated identifiers
+
+Import [id-generator.csv](../../public/examples/id-generator.csv) in Asset Labels. It contains three assets with blank Asset ID cells. Open Asset ID Generator, choose **Asset ID**, enter pattern `TEST-{sequence}`, start `1`, padding `3`, and leave **Generate for blank IDs only** checked. Preview should produce `TEST-001`, `TEST-002` and `TEST-003` with no collisions. Apply, return to Asset Labels to inspect them, then Undo to restore the blanks.
+
+If a populated target column produces zero IDs, the safe default is protecting those existing values. Choose a blank target column or explicitly enable **Allow overwriting existing IDs** to replace them. Typing pattern fields alone does not change records; Preview and Apply are separate actions. A generated value that already exists is reported as a collision and cannot be applied.

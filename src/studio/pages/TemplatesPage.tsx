@@ -194,7 +194,7 @@ export function TemplatesPage({ dataset, template, page, busy, onApplyTemplate, 
       </section>
       <section className="tool-card">
         <h2>Your template library</h2>
-        {loading ? <p role="status">Loading saved templates…</p> : entries.length ? <div className="tool-table"><table><thead><tr><th>Name</th><th>Actions</th></tr></thead><tbody>{entries.map((entry) => {
+        {loading ? <p role="status">Loading saved templates…</p> : entries.length ? <div className="tool-table"><table><thead><tr><th scope="col">Name</th><th scope="col">Actions</th></tr></thead><tbody>{entries.map((entry) => {
           let parseError = '';
           try { parseTemplateDocument(entry.json); } catch (reason) { parseError = reason instanceof Error ? reason.message : 'Invalid saved document'; }
           return <tr key={entry.id}><td><button className="text-button" disabled={disabled || Boolean(parseError)} onClick={() => { try { selectDocument(parseTemplateDocument(entry.json), entry.id); } catch (reason) { setError(reason instanceof Error ? reason.message : 'Saved template is invalid.'); } }}>{entry.name}</button>{parseError && <small role="alert">{parseError}</small>}</td><td className="tool-row"><button className="secondary-button" disabled={disabled || Boolean(parseError)} onClick={() => void duplicateEntry(entry)}>Duplicate</button><button className="secondary-button" disabled={disabled} onClick={() => void removeEntry(entry)}>Delete</button></td></tr>;
