@@ -66,3 +66,5 @@ Cloudflare in-app tab1 is signed in and unsaved at Pages GitHub setup. Existing 
 Verification ready: be553c3 passed64/64 unit,types,lint,build and15/15 production Edge browser tests after workbook integration. No testfailures remaining. Next: merge verification, create actual portfolio media, then final clean install/integratedsecurity/live deployment.
 
 CSS verification: older feature dev-server import test timed out; temporary production server first lacked feature _headers; configuration in test-results was deleted by Playwright output cleanup. Moving temporary config outside output and using built Vite preview resolved setup; regression passed1/1. No application test failure remains.
+
+Next merge: portfolio-documentation49edd99 is clean and reviewed; integrate its docs/media/scripts. Tracking files on that branch are unchanged ancestors and must not replace current root tracking. After merge stop production server48509 and run final full production suite; then push only web-deployment.

@@ -20,3 +20,5 @@ Handoff records actual command failures/resolutions, exact branch state, risks a
 Verification milestone ready:64unit +15productionbrowser tests pass, types/lint/build pass atbe553c3. Includes browser XLS positive/negative, QR decode/privacy/XSS/headers, serial Code128 multipagePDF, cancellation,20k repeated-label834pages, controls/persistence/mobile.
 
 Workspace visual follow-up410da15: Complete; checkbox/caption/mobile CSS and bounded-toggle regression, types/lint/build and1 built-app browser test passed. Merged inebd4333. Refreshed media and final15-browser run pending.
+
+Portfolio49edd99: Ready to merge; README/5ADRs/40-package notices,5screenshots/9.6s GIF/11-page A4 PDF/capture scripts. Lint,syntax,JSON/link checks and visual/PDF inspection passed. Independent supplemental security review found no sensitive artifact/script concern. Live URL remains pending.
