@@ -86,4 +86,19 @@ describe('worker client lifecycle', () => {
     await rejected;
     expect(workers[0].terminated).toBe(true);
   });
+
+  it('immediately terminates and rejects an older worker when a new import starts', async () => {
+    useFakeWorker('timeout');
+    const firstImport = inspectFile(csvFile());
+    await vi.waitFor(() => expect(workers).toHaveLength(1));
+    const firstRejected = expect(firstImport).rejects.toThrow(/cancelled because a newer import started/);
+
+    behavior = 'respond';
+    const secondImport = inspectFile(csvFile());
+    expect(workers[0].terminated).toBe(true);
+    await expect(secondImport).resolves.toEqual({ kind: 'csv', dataset: result });
+    await firstRejected;
+    expect(workers).toHaveLength(2);
+    expect(workers.every((worker) => worker.terminated)).toBe(true);
+  });
 });

@@ -1,107 +1,64 @@
-# Implementation handoff — resumed checkpoint
+# Implementation handoff
 
-User resumed on 2026-10-04 (Asia/Shanghai). The saved pause state below remains historical; the Resume entry records current work.
+Resumed at the user's request on 2026-10-04 (Asia/Shanghai). User authorizes safe escalated commands; eligible approvals use automatic review. Continue without requesting routine confirmation.
 
-## Repository and Git
+## Repository state
+- Repository: C:/Users/Administrator/Documents/Github/AssetTagStudio
+- Starting main and current main: 27d0582aae742990d2c25c0ef752896ac420becd; fetched again, unchanged.
+- Current branch: verification-hardening. Implementation tip before dependency merge: 94b8b97. Exact current documentation/merge tip: `git rev-parse HEAD`.
+- web-deployment: 0ff9609 (verified workspace and workbook hardening integrated).
+- No remote branch push or live deployment yet.
+- Current merge conflicts: tracking and Playwright config; resolved here by refreshing tracking and retaining production header server, Edge fallback, 2 workers, 12s expectations. Prior conflicts were documentation additions and blank EOF/config differences; no source implementation conflicts.
 
-- Repository: C:\Users\Administrator\Documents\Github\AssetTagStudio
-- Starting main SHA (fetched and already current): 27d0582aae742990d2c25c0ef752896ac420becd
-- main remains unchanged at that SHA.
-- Current primary branch: web-deployment.
-- Integration implementation SHA before this checkpoint documentation commit: 1fe4025236fc8d749935dfe6d2667ca5682a4d39.
-- Exact current integration/documentation SHA: run `git rev-parse web-deployment`; the documentation checkpoint necessarily follows the implementation SHA above.
-- No branches have been pushed; no Cloudflare project has been saved or deployed.
-- No merge conflicts encountered.
+## Feature branches
+| Branch | Feature tip | Integration merge | Status |
+|---|---|---|---|
+| application-foundation | d494d36 | 378cdfd | Complete |
+| static-deployment | 1f9b927 | 5bae5ed | Complete |
+| spreadsheet-import | 275845a | 8c1722a | Complete |
+| label-print-engine | b2123cf | 3bf791f | Complete |
+| reduce-pdf-memory | 0f8c35e | 7a06fe4 | Complete |
+| label-workspace | a0ee1bd | b203510 | Complete |
+| bound-workbook-imports | 931f5b0abc27d0096e8f43cd2f006a810e5a02f3 | 0ff9609 | Complete |
+| verification-hardening | 94b8b97 before merge | Pending | Full integrated testing now |
+| portfolio-documentation | fb3fcb4 | Pending | Text/ADRs/notices done; actual media missing |
 
-## Branches and worktrees
+Worktrees: .worktrees/label-workspace, .worktrees/spreadsheet-import (bound-workbook-imports), .worktrees/label-print-engine, .worktrees/portfolio-documentation. Feature worktrees clean at reported commits. Root has only this dependency merge resolution uncommitted until merge commit.
 
-| Branch | Latest SHA | State / ownership |
-|---|---|---|
-| application-foundation | d494d36 | Merged as378cdfd; React/Vite/types/configs |
-| static-deployment | 1f9b927 | Merged as5bae5ed; CI, headers, hosting docs, Edge fallback |
-| spreadsheet-import | 275845a9ba73254b6e765115e140a02b25e2a5e7 | Merged as8c1722a; original import implementation verified |
-| label-print-engine | b2123cf | Merged as3bf791f; shared renderer/layout/PDF/types |
-| label-workspace | 8a9dd098ccb445cc208eea41e69f9ebb1972f06d | NOT merged; UI checkpoint. Worktree .worktrees/label-workspace |
-| bound-workbook-imports | f29d5bc8efb0f002f63adbe07450a78db990827e | NOT merged; ZIP/single-worker checkpoint. Worktree .worktrees/spreadsheet-import |
-| verification-hardening | 0f41de61d3acff5517b140f0b8a2d83e3a65404a | NOT merged; production test server/CSP/QR decoder tests |
-| portfolio-documentation | 7a59dd5ee78a0841879d0df965ec0f0ef119452e | NOT merged; README/architecture/showcase draft, actual media missing |
+## Architecture and interfaces
+Static React/TypeScript/Vite; no backend, accounts, telemetry, uploads or remote fonts. See architecture.md for module contracts. Generic string-valued Dataset, millimeters internally, shared canvas renderer supplies both preview/PDF. PDF-lib embeds physical PNG label positions. Each PNG now embeds immediately to release decoded pixels; compressed document grows with output. Records remain in memory, only template/header names/theme/units/page/hidden-field preferences persist. Import singleton terminates superseded workers and guards stale file reads. Workbook preflight precedes SheetJS. Controls freeze during exports; failed worksheet changes clear stale records. No existing data/API migration.
 
-The label-workspace branch already merged spreadsheet-import (81dfb59) and label-print-engine (86ed7bc) as dependencies. Its original UI commit is1eede53; the newest checkpoint preserves subsequent fixes. Print worktree .worktrees/label-print-engine remains clean on its feature branch. All work is preserved locally in commits.
+## Independent verification
+- Original import 18 tests; engine 21; merged baseline39.
+- PDF memory feature40 unit tests, types/lint/build; postmerge PDF5/5.
+- Workspace checkpoint production3/3; latest UI4/4, security/controls6/6, plus failure4/4 on verification branch.
+- Workspace integration46 unit tests; after workbook merge63/63 pass.
+- Workbook feature35/35, typecheck, lint, build independently passed in worktree. Independent source review found no blocking CFB/ZIP mismatch after all guards.
+- Latest focused production8/8 pass: CSV/Excel serial Code128 3-page A4, missing IDs, empty-sheet recovery, export freeze, preference retention, cancellation, dense/invalid codes, invalid layout, 20k repeated labels834-page export (15s export test).
+- QR decoder/privacy/XSS/headers and mobile/control tests passed in preceding production run. Added browser legacyXLS/malformed-signature test awaits integrated run.
+- Audit0 after jsqr dev dependency. Final integrated audit/secret/source review and clean install pending.
 
-## Architecture and contracts
+Commands: `npm test`, `npm run typecheck`, `npm run lint`, `npm run build`, `npm audit --audit-level=moderate`; `$env:PLAYWRIGHT_CHANNEL='msedge'; npm run test:e2e` (production static server applies _headers).
 
-See architecture.md. Static client-only app, no accounts/backend/uploads/analytics/remote fonts. Dataset string values normalized generically; preferences alone persist. Millimeters are canonical. One shared canvas renderer supplies preview and PDF images; PDF-lib positions at physical dimensions. QR quiet zones4 modules; Code12810 modules; optional barcodeScale0.8–3 default1. Renderer rejects inherited properties and unsupported/oversized code values. No existing user data or migration.
+Failures resolved: worktree Vite/esbuild parent-path access required escalation/primary checkout; dev cold import compile caused initial3 browser failures, production resolved; conflict markers temporarily caused type/lint/browser-start errors, deliberately resolved; unformatted1000/20000 row selectors failed2 tests, corrected to displayed commas and8 focused tests passed. Build warns main chunk exceeds500kB; no suppression. Chromium CDN install timed out; installed Edge used locally, CI installs Chromium.
 
-Owner boundaries: import modules owned by import work; App/styles/preferences by workspace; renderer/layout/PDF by print engine; tracking/integration/deployment by orchestrator. User requested Luna High for bounded parallel work; orchestrator retains architecture ownership.
+## Security and limitations
+- CFB FAT fallback loops, directory pointers/name lengths, excessive DIFAT recursion fixed in931f5b0 with bounded preflight and negative tests.
+- XLSX ZIP allocation quotas/local-central consistency and superseded worker cleanup fixed same commit.
+- Malformed DEFLATE/BIFF parsing can still consume CPU; 10MiB input and20s worker deadline reduce exposure, not a strict hostile-workbook resource guarantee.
+- PDF compressed output, serialization and Blob still need memory. Eager image embedding and removal of extra full buffer copy mitigate peak use;20k unique-label performance not fully benchmarked.
+- Raster labels are not searchable PDF text; actual printer/scanner hardware not tested.
+- Some unusual/encrypted/ZIP64/descriptor/comment archives are rejected; resave ordinary XLSX/CSV.
+- No project license selected by owner.40 production-package license texts included in pending portfolio branch.
+- No known unresolved critical/high finding. Final dedicated integrated review still required.
 
-## Verification so far
+## Hosting draft
+Cloudflare in-app tab1 is signed in and unsaved at Pages GitHub setup. Existing GitHub app already authorizes private-dev-ph/AssetTagStudio. Project tagstudio, npm run build, dist, NODE_VERSION24. Production branch currently main in draft because integration has not been pushed. MUST select web-deployment after verified push; never deploy implementation from main. Requested hostname tagstudio.zachcodes.dev; domain not added. Do not enable analytics. No production secrets needed.
 
-- Foundation: typecheck/lint/build pass under approved execution.
-- Original import: independently verified18/18 unit tests, types/lint; postmerge build pass.
-- Engine: independently verified21/21 unit tests, types/lint.
-- Current integration: `npm test`39/39 pass; `npm run typecheck`, `npm run lint`, `npm run build` pass after engine merge.
-- Workspace agent reported45/45 unit tests, types/lint after dependency merges; newest checkpoint changes still need independent verification.
-- Workspace E2E has NOT passed: nested worktree Vite/esbuild config loading reports parent directory access denied, even in agent's approved run. Trying `--configLoader runner` was the exact active next step when paused.
-- Verification branch: production header E2E1/1 pass against a built static app. QR/privacy/XSS tests await full UI integration.
-- npm audit initially found2 moderate entries for Vitest (GHSA-82fw-gwwq-j7x9); foundation upgraded to4.1.11. Rerun0 known vulnerabilities across288 dependencies before test-only jsqr addition. Final integrated audit pending.
-- Playwright Chromium CDN downloads timed out repeatedly. Installed Edge is available; use `$env:PLAYWRIGHT_CHANNEL='msedge'`. CI installs bundled Chromium.
-- No full integrated UI browser checks, clean-install check, live deployment or final security pass yet.
-
-## Partial work and known issues
-
-1. bound-workbook-imports checkpoint has ZIP local/central preflight (2048 entries,16MiB/member,64MiB total declared expansion,1000:1 ratio; rejects ZIP64/encryption/data descriptors/comments) and supersession/single-worker handling. Its latest tests/checks are pending.
-2. Additional legacy XLS/CFB hardening was assigned but is NOT yet present in checkpoint: SheetJS fallback get_sector_list (xlsx.js1801–15) can loop when a stream starts on a later node of a FAT cycle. Reviewer verified source control flow, did not run an unsafe hang/OOM PoC. Add bounded header/DIFAT/FAT all-cycle validation, directory/stream bounds, MiniFAT checks and valid XLS regression before claiming hardening complete.
-3. ZIP limits bound declared browser allocation; dishonest compressed contents can still waste CPU until worker termination. Do not imply full hostile-input memory guarantees.
-4. PDFDocument retains distinct embedded images until save;20k unique labels can be slow/memory intensive despite LRU budgets.
-5. UI needs independent browser validation, correct selectors and downloaded PDF page/dimension checks. Recent fixes include actual sheet images, pagination, presets, persistence, busy/stale guards; don't assume these pass until tested.
-6. Renderer narrow text region may squeeze a single glyph through fillText maxWidth; review whether to reject instead of squeeze.
-7. README references screenshots/GIF/samplePDF that have not been created. Portfolio branch must not be marked complete.
-8. Minor blank EOF whitespace found by git diff --check; clean added text files on verification branch before final checks.
-
-## Environment and setup
-
-Windows PowerShell; Node24.14.0/npm11.9.0. Dependencies/lock installed. Node modules are ignored; test-only jsqr currently installed locally but tracked only on verification-hardening until merged.
-
-Use per-command Git trust, not global trust:
-`git -c safe.directory=C:/Users/Administrator/Documents/Github/AssetTagStudio ...`
-Worktree Git commands also need a second `-c safe.directory=FULL_WORKTREE_PATH`.
-Git writes and Vite bundler parent-directory access require sandbox escalation. Approved npm/Git commands were used. No credentials committed.
-
-Bundled Python (for future screenshot GIF): C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe. Workspace runtime discovery tool can return libraries again.
-
-## Cloudflare draft
-
-User chose tagstudio.zachcodes.dev and signed in to the Codex in-app Cloudflare tab. Existing Cloudflare GitHub app already lists AssetTagStudio, so no permission expansion was needed.
-
-Unsaved Pages setup:
-- Repository private-dev-ph/AssetTagStudio
-- Project name tagstudio
-- Build npm run build; output dist; NODE_VERSION24
-- Production branch currently main in the unsaved form because web-deployment does not exist remotely yet. MUST select web-deployment after pushing the verified branch; never deploy this implementation from main.
-- Custom domain has NOT been added; existing zachcodes.dev account/domain is accessible.
-- Browser tab was marked for handoff to preserve draft; do not click Save and Deploy until implementation passes final checks.
-
-## Exact next action after the user resumes
-
-1. Read this handoff, inspect root/worktree git status and SHAs; do not restart investigation.
-2. Finish/test CFB preflight and rerun ZIP/single-worker tests on bound-workbook-imports.
-3. Verify UI on its branch: try Vite configLoader runner, or test the committed UI SHA in the primary checkout without merging first. Root approved builds previously work there. Fix real failures, then merge verified UI and bounded imports in dependency order with updated tracking.
-4. Update/merge verification-hardening, resolve additive handoff/config conflicts deliberately; run all unit/types/lint/production browser checks incl QR decoding, actual multi-page PDFs and negative paths.
-5. Request dedicated integrated security review, audit/secret scan and clean install/build.
-6. Generate real screenshots, under30s GIF and samplePDF, update/merge portfolio-documentation.
-7. Push ONLY web-deployment when verified, connect Pages production to it, deploy, add tagstudio.zachcodes.dev, verify live app/headers/CI.
-8. Leave main unchanged; final clean Git checks and complete structured report/confidence assessment.
-
-
-## Resume — 2026-10-04
-User resumed implementation. Import and workspace agents active on their saved feature worktrees. Current primary checkout verification-hardening; merging saved integration for renderer/test updates. Remote main re-fetched and unchanged. Handoff conflict resolved by retaining latest checkpoint with verification scope preserved here. No deployment yet.
-Resume: reduce-pdf-memory ready; independently ran40 unit tests, typecheck, lint, build. Each new PNG is embedded immediately so PDF-lib releases decoded pixels. Production UI checkpoint8a independently passed3/3 tests with integration headers; dev cold worker loading previously failed3/3. Latest workspace state/security fixes await verification. Next: commit/merge PDF memory branch then latest UI and bounded import branches.
-
-PDF memory0f8c35e merged into web-deployment as7a06fe4; post-merge PDF tests5/5 pass. Current checkout verification-hardening; additive tracking conflict resolved preserving both milestone entries. Next: verify current UI changes before merging.
-
-## Current resume state
-Primary verification-hardening atf452bc7 before this tracking commit; web-deployment7a06fe4; main27d0582 unchanged. Workspace agent finalizing state fixes; import agent finalizing CFB FAT/directory/name/DIFAT bounds plus tests; portfolio_docs on isolated .worktrees/portfolio-documentation ownsREADME/ADRs/notices. Security reviewer identified CFB directory path/name/DIFAT mismatches and they are assigned for correction. Next: independently test latest UI SHA, merge verified feature branches in dependency order, full production browser suite and final integrated security review, then real media and live deployment. No uncommitted implementation beyond tracking in primary; agents have their own uncommitted feature edits. No implementation conflicts encountered; only additive tracking conflicts resolved.
-
-Workspace dependency merge: inspected Playwright conflict; retained production build/header server, Edge fallback, bounded concurrency and waits instead of dev server reuse. Unit47/47 passed; initial types/lint/browser startup failed on unremoved conflict markers, resolved before rerun. Latest workspacea0ee1bd dependency integrated here for testing, not yetweb-deployment.
-
-Ready to integrate workspacea0ee1bd: root production workspace4/4 and failure4/4 passed, including serialbarcode3page A4, worksheetfailure recovery, exportfreeze, hiddenprefs, cancellation and20k repeatedlabels834pages. Previous12/14 browserrun failed only unformatted1000/20000 selector expectations; corrected and rerun8/8. Import931f5b0 independently35tests/types/lint/build pass; final reviewer active.
+## Exact next action
+1. Commit this verification dependency merge, run64 expected unit tests/types/lint and all15 production browser tests.
+2. Merge verified verification-hardening into web-deployment; update tracking and inspect status/diff.
+3. Generate real workspace/landing/dark/mobile screenshots, <30s GIF and sample PDF; finish portfolio branch then merge. Text/ADRs/notices already fb3fcb4.
+4. Dedicated integrated security review, secret scan/audit and clean npm ci/types/lint/unit/build/browser checks from integration.
+5. Push only verified web-deployment, select it in Cloudflare draft, deploy/add custom domain, verify live app/headers and GitHub CI.
+6. Final main unchanged/all branches contained/clean Git checks; record final SHA and structured report/confidence.

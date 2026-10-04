@@ -6,7 +6,20 @@ type WorkerResponse<T> = { id: number; ok: true; value: T } | { id: number; ok: 
 type ImportKind = 'csv' | 'excel';
 
 let nextRequestId = 1;
+let operationGeneration = 0;
+let cancelActiveWorker: (() => void) | undefined;
 const WORKER_TIMEOUT_MS = 20_000;
+
+function beginOperation(): number {
+  operationGeneration += 1;
+  cancelActiveWorker?.();
+  cancelActiveWorker = undefined;
+  return operationGeneration;
+}
+
+function ensureCurrentOperation(generation: number): void {
+  if (generation !== operationGeneration) throw new ImportError('Import was superseded by a newer file selection.');
+}
 
 function kindOf(file: File): ImportKind {
   const extension = file.name.toLowerCase().split('.').pop();
@@ -23,8 +36,15 @@ function checkFile(file: File): ImportKind {
 function runWorker<T>(
   payload: Record<string, unknown>,
   transfer: Transferable[] = [],
+  generation: number,
 ): Promise<T> {
   return new Promise((resolve, reject) => {
+    try {
+      ensureCurrentOperation(generation);
+    } catch (error) {
+      reject(error);
+      return;
+    }
     let worker: Worker;
     try {
       worker = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' });
@@ -34,15 +54,18 @@ function runWorker<T>(
     }
     const id = nextRequestId++;
     let settled = false;
+    const cancel = () => finish(new ImportError('Import was cancelled because a newer import started.'));
     const finish = (error?: Error, value?: T) => {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
+      if (cancelActiveWorker === cancel) cancelActiveWorker = undefined;
       worker.terminate();
       if (error) reject(error);
       else resolve(value as T);
     };
     const timer = setTimeout(() => finish(new ImportError('Import took too long and was stopped. Try a smaller or simpler file.')), WORKER_TIMEOUT_MS);
+    cancelActiveWorker = cancel;
     worker.onmessage = (event: MessageEvent<WorkerResponse<T>>) => {
       const message = event.data;
       if (!message || message.id !== id) return;
@@ -61,6 +84,7 @@ function runWorker<T>(
 
 export async function inspectFile(file: File): Promise<{ kind: 'csv'; dataset: Dataset } | { kind: 'excel'; sheets: string[] }> {
   const kind = checkFile(file);
+  const generation = beginOperation();
   if (kind === 'csv') {
     let text: string;
     try {
@@ -68,7 +92,8 @@ export async function inspectFile(file: File): Promise<{ kind: 'csv'; dataset: D
     } catch {
       throw new ImportError('The CSV file could not be read.');
     }
-    const dataset = await runWorker<Dataset>({ action: 'parseCsv', text });
+    ensureCurrentOperation(generation);
+    const dataset = await runWorker<Dataset>({ action: 'parseCsv', text }, [], generation);
     return { kind: 'csv', dataset };
   }
   let buffer: ArrayBuffer;
@@ -77,7 +102,8 @@ export async function inspectFile(file: File): Promise<{ kind: 'csv'; dataset: D
   } catch {
     throw new ImportError('The Excel file could not be read.');
   }
-  const sheets = await runWorker<string[]>({ action: 'listSheets', buffer }, [buffer]);
+  ensureCurrentOperation(generation);
+  const sheets = await runWorker<string[]>({ action: 'listSheets', buffer }, [buffer], generation);
   return { kind: 'excel', sheets };
 }
 
@@ -85,11 +111,13 @@ export async function readSheet(file: File, sheetName: string): Promise<Dataset>
   const kind = checkFile(file);
   if (kind !== 'excel') throw new ImportError('Worksheet selection is only available for Excel files.');
   if (!sheetName) throw new ImportError('Choose a worksheet to import.');
+  const generation = beginOperation();
   let buffer: ArrayBuffer;
   try {
     buffer = await file.arrayBuffer();
   } catch {
     throw new ImportError('The Excel file could not be read.');
   }
-  return runWorker<Dataset>({ action: 'parseWorkbook', buffer, sheetName }, [buffer]);
+  ensureCurrentOperation(generation);
+  return runWorker<Dataset>({ action: 'parseWorkbook', buffer, sheetName }, [buffer], generation);
 }
