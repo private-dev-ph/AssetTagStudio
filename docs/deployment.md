@@ -30,3 +30,5 @@ Vercel/Netlify can host dist with equivalent build settings and provider-specifi
 Sources: [Cloudflare build settings](https://developers.cloudflare.com/pages/configuration/build-configuration/), [headers](https://developers.cloudflare.com/pages/configuration/headers/), [Git integration](https://developers.cloudflare.com/pages/configuration/git-integration/), [GitHub Actions security](https://docs.github.com/en/actions/reference/security/secure-use).
 
 Local browser fallback: if the Chromium CDN is unavailable and Microsoft Edge is installed, use PLAYWRIGHT_CHANNEL=msedge for npm run test:e2e. CI uses bundled Chromium by default.
+
+To verify a deployed build with the same synthetic-data suite, set `PLAYWRIGHT_BASE_URL` to its HTTPS root URL and run `npm run test:e2e`. This skips the local build/server and keeps the privacy assertion tied to the configured origin. Clear this variable to return to local production testing. The suite performs no server writes; imported fixtures and generated PDFs stay in the test browser.

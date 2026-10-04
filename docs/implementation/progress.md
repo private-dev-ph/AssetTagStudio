@@ -19,3 +19,5 @@ All requested MVP features are integrated into web-deployment. main remains 27d0
 Final clean dependency install completed. Final applicable commands: npm run typecheck, npm run lint, npm test (64 tests,8 files), npm run test:e2e with PLAYWRIGHT_CHANNEL=msedge (15 tests,55.8s; production build included), npm audit --audit-level=moderate (0 vulnerabilities). All nine feature tips are ancestors of integration. No source merge conflicts or outstanding implementation branch. Handoff contains setup failures, their resolutions and exact next action.
 
 Live-smoke preview-copy regression: Ready to merge. The note now compares rendered preview labels with actual records on the page, not empty grid capacity. Sample8-label and capped80-label regressions passed2/2 on production build; typecheck/lint passed.
+
+Deployed-suite support: Ready to merge on verification-hardening. PLAYWRIGHT_BASE_URL skips the local server and binds privacy checks to the configured origin. Typecheck/lint/build and2 focused production security tests passed.
