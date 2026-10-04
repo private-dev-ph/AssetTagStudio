@@ -1,18 +1,38 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AssetRecord, LabelTemplate } from '../../types';
 import { DEFAULT_TEMPLATE } from '../../types';
-import { interpolatePayload, validateTemplate, wrapText } from './renderer';
+import { interpolatePayload, renderLabel, validateTemplate, wrapText } from './renderer';
 
 const template: LabelTemplate = {
   ...DEFAULT_TEMPLATE,
   code: { ...DEFAULT_TEMPLATE.code, field: 'Asset ID' },
 };
 const record: AssetRecord = { id: 'row-1', values: { 'Asset ID': 'A-104', 'Location Name': 'North room' } };
+afterEach(() => vi.unstubAllGlobals());
 
 describe('label template and payload', () => {
   it('accepts the default physical size and interpolates headers with spaces', () => {
     validateTemplate(template);
     expect(interpolatePayload(record, { ...template, code: { ...template.code, payload: 'ID={Asset ID}; {Location Name}' } })).toBe('ID=A-104; North room');
+  });
+
+  it('supports text-only labels and shares payload-mode resolution with the core builder', () => {
+    const textOnly: LabelTemplate = { ...template, mode: 'cable', textLayout: 'mirrored', fields: [{ source: 'Location Name', label: '', fontSize: 10, bold: true }], code: { ...template.code, type: 'none', field: '' } };
+    validateTemplate(textOnly);
+    expect(interpolatePayload(record, textOnly)).toBe('');
+    expect(interpolatePayload(record, { ...template, code: { ...template.code, payload: 'https://inventory.test/{Asset ID}', payloadMode: 'url' } })).toBe('https://inventory.test/A-104');
+    expect(() => validateTemplate({ ...textOnly, fields: [] })).toThrow(/text field/);
+  });
+
+  it('draws mirrored wrap text twice in the two opposing readable areas', async () => {
+    const fillText = vi.fn();
+    const context = { fillStyle: '', strokeStyle: '', lineWidth: 1, font: '', textAlign: 'left', fillRect: vi.fn(), strokeRect: vi.fn(), measureText: (text: string) => ({ width: text.length * 3 }), fillText, save: vi.fn(), translate: vi.fn(), rotate: vi.fn(), restore: vi.fn() } as unknown as CanvasRenderingContext2D;
+    vi.stubGlobal('document', { createElement: () => ({ width: 0, height: 0, getContext: () => context, toDataURL: () => 'data:image/png;base64,AA==' }) });
+    const cable: LabelTemplate = { ...template, mode: 'cable', textLayout: 'mirrored', widthMm: 70, heightMm: 18, paddingMm: 1, fields: [{ source: 'From', label: '', fontSize: 5, bold: true }], code: { ...template.code, type: 'none', field: '' } };
+    await renderLabel({ id: 'cable', values: { From: 'SW01 → SERVER01' } }, cable);
+    expect(fillText).toHaveBeenCalledTimes(2);
+    expect(context.translate).toHaveBeenCalledWith(70 * 8, 18 * 8);
+    expect(context.rotate).toHaveBeenCalledWith(Math.PI);
   });
 
   it('reports a missing raw value and unknown placeholder with repair guidance', () => {
