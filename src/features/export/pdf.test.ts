@@ -56,4 +56,16 @@ describe('PDF generation', () => {
     ], template, page);
     expect(renderLabel).toHaveBeenCalledTimes(1);
   });
+
+  it('embeds each new image before rendering the next label', async () => {
+    const embed = vi.spyOn((await import('pdf-lib')).PDFImage.prototype, 'embed');
+    try {
+      renderLabel.mockImplementation(async () => {
+        if (renderLabel.mock.calls.length === 2) expect(embed).toHaveBeenCalled();
+        return onePixelPng;
+      });
+      const bytes = await generatePdf(records, template, page);
+      expect((await PDFDocument.load(bytes)).getPageCount()).toBe(2);
+    } finally { embed.mockRestore(); }
+  });
 });

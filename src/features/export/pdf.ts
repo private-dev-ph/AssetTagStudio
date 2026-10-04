@@ -89,6 +89,9 @@ export async function generatePdf(
       const pngBytes = new Uint8Array(binary.length);
       for (let byte = 0; byte < binary.length; byte++) pngBytes[byte] = binary.charCodeAt(byte);
       const image = await pdf.embedPng(pngBytes);
+      // Compress now so PDF-lib releases the decoded pixel channels instead of
+      // retaining every label's full RGB buffer until the final save.
+      await image.embed();
       checkCancelled(options.signal);
       const size = pngBytes.byteLength + dataUrl.length * 2;
       if (size <= IMAGE_CACHE_BYTES) {

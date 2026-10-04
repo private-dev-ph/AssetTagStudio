@@ -92,3 +92,5 @@ Unsaved Pages setup:
 7. Push ONLY web-deployment when verified, connect Pages production to it, deploy, add tagstudio.zachcodes.dev, verify live app/headers/CI.
 8. Leave main unchanged; final clean Git checks and complete structured report/confidence assessment.
 
+
+Resume: reduce-pdf-memory ready; independently ran40 unit tests, typecheck, lint, build. Each new PNG is embedded immediately so PDF-lib releases decoded pixels. Production UI checkpoint8a independently passed3/3 tests with integration headers; dev cold worker loading previously failed3/3. Latest workspace state/security fixes await verification. Next: commit/merge PDF memory branch then latest UI and bounded import branches.
