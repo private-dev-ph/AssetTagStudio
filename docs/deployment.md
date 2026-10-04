@@ -42,4 +42,22 @@ Local browser fallback: if the Chromium CDN is unavailable and Microsoft Edge is
 
 To verify a deployed build with the same synthetic-data suite, set `PLAYWRIGHT_BASE_URL` to its HTTPS root URL and run `npm run test:e2e`. This skips the local build/server and keeps the privacy assertion tied to the configured origin. Clear this variable to return to local production testing. The suite performs no server writes; imported fixtures and generated PDFs stay in the test browser.
 
-Hosted acceptance:16/16 Playwright tests passed on tagstudio.zachcodes.dev after the scoped RUM exclusion. This includes actual QR/Code128 PDF downloads, multiple-sheet Excel import, Unicode QR decode and no inventory network/storage transmission. Local64unit/16browser and Ubuntu CI64unit/16Chromium also passed. Physical print hardware remains unverified.
+Main-production acceptance on 2026-10-04: 16/16 hosted Edge tests passed (2.3 minutes), 16/16 local production Edge tests passed (1.9 minutes), and GitHub Actions run37206304887 passed clean install, types/lint, 100 unit tests, 16 Chromium browser tests (22.2 seconds), build and audit0 on ac3fa0e. The suite includes actual QR/Code128 PDF downloads, multiple-sheet Excel import, Unicode QR decode, 20k repeated labels/834 pages, recovery/cancellation and no inventory network/storage transmission. Both live hostnames serve complete `/LICENSE.txt`, `/NOTICE.txt` and `/third-party-notices.txt` with the configured security headers and no injected analytics. Physical print hardware remains unverified.
+
+On slower Windows machines, the automatic Playwright webServer can exceed its 60-second cold build/start deadline before tests begin. Build first, then start the existing production server in one terminal:
+
+```powershell
+npm run build
+node tests/serve-production.mjs
+```
+
+In a second terminal, run the unchanged suite against that loopback server:
+
+```powershell
+$env:PLAYWRIGHT_CHANNEL = 'msedge'
+$env:PLAYWRIGHT_BASE_URL = 'http://127.0.0.1:4173'
+npm run test:e2e
+Remove-Item Env:PLAYWRIGHT_BASE_URL
+```
+
+Stop the server with Ctrl+C after testing. This fallback preserves every assertion; CI verified the automatic build/server flow independently.
