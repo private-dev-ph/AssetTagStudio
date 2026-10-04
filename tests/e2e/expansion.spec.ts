@@ -1,6 +1,7 @@
 import { expect, test, type Download, type Page } from '@playwright/test';
 import { PDFDocument } from 'pdf-lib';
 import jsQR from 'jsqr';
+import Papa from 'papaparse';
 import { readFile } from 'node:fs/promises';
 
 async function loadCsv(page: Page, name: string, contents: string) {
@@ -156,6 +157,69 @@ test('template library imports strictly, renames without replacing settings, dup
   expect(persisted.printers).toHaveLength(0);
 });
 
+test('template library enforces 100 entries and offers explicit template-only recovery for corrupt storage', async ({ page }) => {
+  test.setTimeout(60_000);
+  await loadCsv(page, 'library-capacity.csv', 'Asset ID,Name\nLIB-1,Router\n');
+  await openView(page, 'templates');
+  await page.getByRole('button', { name: 'Standard Asset Tag' }).click();
+  await page.getByRole('button', { name: 'Apply template' }).click();
+  await page.getByLabel('Template name').fill('Capacity seed');
+  await page.getByRole('button', { name: 'Save current settings' }).click();
+  await expect(page.getByRole('row').filter({ hasText: 'Capacity seed' })).toBeVisible();
+  const seedJson = (await readLibrary(page).then(library => library.templates[0] as { json: string })).json;
+
+  await page.evaluate(async json => {
+    const database = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open('assettag-studio-library');
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    await new Promise<void>((resolve, reject) => {
+      const transaction = database.transaction(['templates', 'printers'], 'readwrite');
+      const templates = transaction.objectStore('templates');
+      templates.clear();
+      for (let index = 0; index < 100; index += 1) templates.put({ id: `capacity-${index}`, name: `Capacity ${index}`, json });
+      transaction.objectStore('printers').put({ id: 'keep-printer', name: 'Preserved printer profile', json: '{}' });
+      transaction.oncomplete = () => { database.close(); resolve(); };
+      transaction.onerror = () => { database.close(); reject(transaction.error); };
+      transaction.onabort = () => { database.close(); reject(transaction.error); };
+    });
+  }, seedJson);
+
+  await page.getByRole('button', { name: 'Standard Asset Tag' }).click();
+  await page.getByRole('button', { name: 'Apply template' }).click();
+  await page.getByLabel('Template name').fill('One too many');
+  await page.getByRole('button', { name: 'Save current settings' }).click();
+  await expect(page.getByRole('alert')).toContainText('already contains 100 items');
+
+  await page.evaluate(async () => {
+    const database = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open('assettag-studio-library');
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    await new Promise<void>((resolve, reject) => {
+      const transaction = database.transaction('templates', 'readwrite');
+      const store = transaction.objectStore('templates');
+      const request = store.get('capacity-0');
+      request.onsuccess = () => {
+        const damaged = request.result as { id: string; name: string; json: string };
+        store.delete(damaged.id);
+        store.put({ ...damaged, id: '' });
+      };
+      transaction.oncomplete = () => { database.close(); resolve(); };
+      transaction.onerror = () => { database.close(); reject(transaction.error); };
+      transaction.onabort = () => { database.close(); reject(transaction.error); };
+    });
+  });
+  await page.reload();
+  await expect(page.getByRole('alert')).toContainText('corrupted');
+  await page.getByRole('button', { name: 'Clear saved templates and retry' }).click();
+  const recovered = await readLibrary(page);
+  expect(recovered.templates).toHaveLength(0);
+  expect(recovered.printers).toEqual([{ id: 'keep-printer', name: 'Preserved printer profile', json: '{}' }]);
+});
+
 test('payload builder encodes URL columns and rejects missing references and dense QR payloads', async ({ page }) => {
   await loadCsv(page, 'url-values.csv', 'Asset ID,Name\nA/B 1,Router\n');
   await openView(page, 'payload-builder');
@@ -166,6 +230,7 @@ test('payload builder encodes URL columns and rejects missing references and den
 
   await page.getByLabel('Payload builder template').fill('https://inventory.example/assets/{Missing Column}');
   await expect(page.getByRole('alert').filter({ hasText: 'not a column' })).toBeVisible();
+  await page.getByLabel('Payload QR size').fill('8');
   await page.getByLabel('Payload builder template').fill(`https://inventory.example/${'A'.repeat(300)}`);
   await expect(page.getByRole('alert').filter({ hasText: 'too dense' })).toBeVisible();
 });
@@ -254,13 +319,23 @@ test('a successful print manifest retains its original IDs, pages, and coordinat
   const [jsonDownload, csvDownload] = await Promise.all([jsonPromise, csvPromise]);
   const manifest = JSON.parse((await downloadBytes(jsonDownload)).toString('utf8')) as { records: Array<{ assetId: string; page: number; labelIndex: number; xMm: number; yMm: number }> };
   const csv = (await downloadBytes(csvDownload)).toString('utf8');
+  const csvRows = Papa.parse<Record<string, string>>(csv, { header: true, skipEmptyLines: true }).data;
   expect(manifest.records.map(label => label.assetId)).toEqual(['TAG-1', 'TAG-2', 'TAG-3']);
   expect(manifest.records.map(label => label.page)).toEqual([1, 2, 3]);
   expect(manifest.records.map(({ xMm, yMm }) => ({ xMm, yMm }))).toEqual(Array(3).fill(previewPositions[0]));
   expect(manifest.records.every(label => label.page <= pdf.getPageCount() && label.labelIndex >= 1)).toBe(true);
-  expect(csv).toContain('"1","1","1","10","10","TAG-1"');
-  expect(csv).toContain('"2","2","1","10","10","TAG-2"');
-  expect(csv).toContain('"3","3","1","10","10","TAG-3"');
+  expect(csvRows).toHaveLength(manifest.records.length);
+  expect(csvRows.map(row => ({
+    recordId: row.record_id,
+    assetId: row.asset_id,
+    labelIndex: Number(row.label_index),
+    page: Number(row.page),
+    row: Number(row.row),
+    column: Number(row.column),
+    xMm: Number(row.x_mm),
+    yMm: Number(row.y_mm),
+    payload: row.payload,
+  }))).toEqual(manifest.records);
 });
 
 test('FieldLens PDF and CSV use matching IDs, and formula-leading IDs are rejected', async ({ page }) => {
