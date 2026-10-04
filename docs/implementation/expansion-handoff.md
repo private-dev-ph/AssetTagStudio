@@ -50,3 +50,11 @@ Unverified physical printer/scanner/camera and Firefox/Safari; FieldLens receive
 ## Exact next action
 
 Commit this pre-merge checkpoint with security review and uploaded-image browser regression. Switch feature-expansion and merge expansion-workspace with an explicit merge commit. Run full local unit/type/lint/build/browser verification from that branch; record actual totals and final merge SHA. Advance clean-install checkout to final code and verify build. Finish progress/security/handoff metadata and final report; verify all required branch tips are ancestors, main unchanged and clean Git status. Do not publish.
+
+## Integration transition 2026-10-05
+
+Reviewed workspace63808b9 merged into feature-expansion as e57f9f3f71bd2fd4f110661c2f5a296426af4fe6. Current branch feature-expansion; main remains345071383d7029423e805efb799204e6852f69f7. Working tree clean immediately after merge. All required source branches are intentionally integrated through this merge; verify their ancestry next. Final full local unit/type/lint/build/browser checks running from feature-expansion. No publication. Next action: finish final checks, update completed checklist/security/report, commit final documentation, verify clean state and exact final tip.
+
+## Serial worker startup regression
+
+Final branch run32/33 passed; quota fixed. Serial simple regex intermittently timed out because100ms deadline included native worker startup (observed alert in error context). Root will add ready handshake with separate bounded5s startup and100ms execution budgets, preserving expensive-pattern isolation. Do not declare completion yet. Branch serial-worker-startup will be independently tested and merged into feature-expansion; no main/remote action.
