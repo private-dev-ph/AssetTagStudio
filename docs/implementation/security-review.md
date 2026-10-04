@@ -1,5 +1,9 @@
 # Integrated security review
 
+## QR branding review — 2026-10-04
+
+Severity: informational; disposition: reviewed, no actionable finding. Changes use fixed local SVG paths and self-contained paths/rectangles/text, with no scripts, event handlers, external images/fonts, foreignObject or credentials. Existing CSP/header/privacy rules are preserved. The header mark is decorative and the existing accessible home-link name remains. Static social URLs contain no inventory data; metadata triggers no runtime uploads. PNG derivatives use existing Playwright with fixed local strings and output paths, no new dependencies or unsafe deserialization. Root inspected geometry, light/dark/mobile/card/favicon output and diff; independent read-only review found no issues. Types/lint/build/100unit and16production Edge browser tests passed (38.4s), including request/storage privacy, XSS, headers, QR decode, error/cancellation and834-page export. Audit0; targeted credential-pattern scan0; four PNG signatures/dimensions and seven SVG structures verified. Remaining branding limitations: SVG wordmark/system-font raster metrics can vary by environment; favicon/consumer preview caches can delay updates; logo motifs are decorative rather than a scannable payload. Existing large-bundle/resource/hardware limitations remain. Final integrated/provider acceptance follows the feature merge.
+
 Dedicated independent source review completed on web-deployment at 71f5616, with earlier feature reviews retained. No actionable exploitable finding or unresolved critical/high finding was identified. Supplemental CSS/App/artifact review and final integrated source/secret checks completed at372d90f. Live response headers, privacy and hosted workflows verified.
 
 | Severity | Area | Description | Disposition / fix | Fix commit | Remaining risk / acceptance |

@@ -1,5 +1,12 @@
 # Implementation progress
 
+## QR branding follow-up — 2026-10-04
+
+| Milestone / feature | Feature branch | Status | Related files | Latest relevant commit / tests | Unresolved issues / dependencies | Merge |
+|---|---|---|---|---|---|---|
+| QR-inspired A/tag identity and webpage branding | qr-branding | Ready to merge | public/branding, src/App.tsx, src/styles.css, index.html, portfolio-showcase.json, README, branding guide/render script, refreshed synthetic media | Starting main bb25d5d; type/lint/build/100unit/16Edge(38.4s)/audit0 and actual portfolio loader/schema/logo pass; independent review clean; light/dark/mobile/card/icon visually reviewed; GIF6frames9.6s;7SVG/4PNG verified | Integration/live acceptance next; no dependency changes; provider/platform icon/card caches may delay refresh | Not merged |
+
+
 All requested MVP features and follow-ups are complete and integrated into main and web-deployment. Original main was 27d0582aae742990d2c25c0ef752896ac420becd; the owner subsequently authorized updating main and serving it. Accepted main release: ac3fa0e58255be4fb54e8b2f34e74dfaa970b277. Exact final documentation tip: `git rev-parse HEAD`; synchronized refs and final pipeline are recorded in the final report. The older milestones below retain historical verification evidence; the latest release evidence supersedes their branch/license/test-count status.
 
 | Milestone / feature | Feature branch | Status | Related files | Latest relevant commit / tests | Unresolved issues / dependencies | Merge |

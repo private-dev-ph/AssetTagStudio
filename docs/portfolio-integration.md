@@ -1,5 +1,7 @@
 # Portfolio integration
 
+Branding follow-up: optional `logo` references the tracked 512px `public/branding/assettag-logo.png` tile with meaningful alt text. The upstream loader resolves it against raw main exactly like other image objects. The verifier includes logo existence/tracking and URL resolution. The screenshots and six-frame9.6s demo were refreshed with the QR-inspired header mark; narrative and sample PDF remain unchanged. See branding.md for editable vectors and regeneration.
+
 Contract source: private-dev-ph/portfolio at c2661ae55aa202952d21b66d778f9f0a5a2ec760, docs/portfolio-showcases.md, docs/portfolio-showcase.schema.json and lib/github.ts. Read the current upstream contract when changing metadata; the source checkout used for verification is ignored under .worktrees/portfolio-reference.
 
 The former root manifest used name/stack/features/liveUrl/screenshot/demo/samplePdf, omitted required narrative fields, and would be ignored by the portfolio loader. The replacement uses title/techStack/keyFeatures/internalDemoAvailable/liveDemoUrl plus all required problem, purpose, role, architecture, challenge, result and lesson fields. It uses only schema-supported properties. Sample PDF links belong in README; accessible images and sections use tracked docs/media paths. No invented adoption/throughput claim is included. Repeated-label and unique-label workload evidence are distinguished.

@@ -1,5 +1,7 @@
 # Architecture and contracts
 
+QR branding follow-up (2026-10-04): extend the supplied A/tag silhouette with square QR finder motifs. Editable SVGs remain the source; existing Playwright/Chromium renders PNG derivatives for social/touch/portfolio consumers without a new dependency. Header uses a decorative CSS alpha mask colored by the existing application theme, while its existing home-link accessible name remains authoritative. Favicon follows system color scheme; manual application theme controls the header. Static Open Graph/Twitter metadata references the production origin and a 1200×630 PNG. The motif is decorative, not an encoded/scannable payload. Existing importer, renderer, physical labels, preferences and privacy boundaries remain unchanged.
+
 The repository started with only .gitattributes; there are no existing APIs, user data or migrations. The MVP follows the supplied plan; later features remain out of scope.
 
 - React + TypeScript + Vite, static files only. No accounts, backend, telemetry, uploads, remote fonts or runtime CDN requests.

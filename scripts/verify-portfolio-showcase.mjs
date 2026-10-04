@@ -59,16 +59,17 @@ assert.equal(project.showcase.title, 'AssetTag Studio');
 assert.equal(project.showcase.sections.length, manifest.sections.length);
 assert.equal(loader.repoToProject(repo, repo.language, { ...resolved, internalDemoAvailable: false }).liveUrl, undefined);
 
-const images = [...manifest.images, ...manifest.sections.flatMap((section) => section.type === 'image' ? [section.image] : section.type === 'carousel' ? section.images : [])];
+const images = [...(manifest.logo ? [manifest.logo] : []), ...manifest.images, ...manifest.sections.flatMap((section) => section.type === 'image' ? [section.image] : section.type === 'carousel' ? section.images : [])];
 for (const image of images) {
   assert(image.alt.trim(), 'Every image needs meaningful alternative text.');
-  assert(image.src.startsWith('docs/media/'), `Expected a local tracked showcase image: ${image.src}`);
+  assert(image.src.startsWith('docs/media/') || image.src.startsWith('public/branding/'), `Expected a local tracked showcase image: ${image.src}`);
   const absolute = path.resolve(root, image.src);
   assert(absolute.startsWith(root + path.sep), 'Image path escaped the project.');
   assert((await stat(absolute)).size > 0, `Empty image: ${image.src}`);
   execFileSync('git', ['-c', `safe.directory=${root.replaceAll('\\', '/')}`, 'ls-files', '--error-unmatch', image.src], { cwd: root, stdio: 'pipe' });
 }
 assert.equal(resolved.images[0].src, 'https://raw.githubusercontent.com/private-dev-ph/AssetTagStudio/main/docs/media/workspace.png');
+if (manifest.logo) assert.equal(resolved.logo.src, `https://raw.githubusercontent.com/private-dev-ph/AssetTagStudio/main/${manifest.logo.src}`);
 const readme = await readFile(path.join(root, 'README.md'), 'utf8');
 assert(readme.includes('portfolio-showcase.json') && readme.includes('private'), 'README must explain metadata and private discovery status.');
 assert(readme.includes('docs/media/sample-labels.pdf'), 'README must retain the sample PDF link.');
