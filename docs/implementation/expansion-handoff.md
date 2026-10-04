@@ -32,3 +32,7 @@ Physical printers/camera, Firefox/Safari and receiver CSV ingestion unverified. 
 ## Exact next action
 
 Finish focused root checks and commit this checkpoint. Merge print-identity-packages74de40d and expansion-regressions298ecfb into workspace. Review merge diff; run complete local unit/type/lint/build and all local Edge tests. Fix actual failures, document security findings. Merge reviewed workspace into feature-expansion; verify every required branch ancestor, main unchanged and clean working tree. Record final SHAs/evidence in tracking docs and final report. Do not publish.
+
+## Integrated checkpoint 80f0d20
+
+Reviewed print74de40d merged0cd6049; regression298ecfb merged80f0d20, clean source integration. Independent full168unit/24files, types, lint, production build pass. Extra PDFdraw/manifest coordinate regression6focusedpass (169total expected). Full local Edge29/30pass: all16original plus13new; capacity/recovery fixture omitted required preset field mapping, correction underway on expansion-regressions. New storage-write failure regression requested. npm audit0. Public quickstart/cable/location examples added; no remote action. Next: merge corrected tests, run focused storage browser checks, final security review, clean install verification, then merge workspace into feature-expansion.

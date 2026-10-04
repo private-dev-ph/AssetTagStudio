@@ -48,6 +48,8 @@ The `feature-expansion` branch adds the twelve tools below. Verification runs lo
 
 Create, Data, Design and Tools navigation shares one in-memory dataset. Settings libraries use IndexedDB; imported rows and undo history remain in memory. Changes require explicit Apply. Separate Apply and Export actions preserve the chosen print settings.
 
+Use the [local expansion walkthrough](docs/implementation/expansion-quickstart.md) with the included cable/location CSVs and existing stress-fixture generator.
+
 ## Demo workflow
 
 Choose **Try sample data**, select a unique identifier, edit the visible fields, choose a label size and paper, then download the PDF. Print at **100% / actual size**, with fit-to-page disabled. The downloadable CSV template is available at the top of the workspace.
