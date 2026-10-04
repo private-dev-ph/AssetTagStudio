@@ -14,6 +14,7 @@ test('sample CSV builds a QR label PDF locally', async ({ page }) => {
   await page.getByRole('button', { name: 'Try sample data' }).click();
   await expect(page.getByRole('heading', { name: 'Choose assets' })).toBeVisible();
   await expect(page.getByText('8 rows · 5 columns')).toBeVisible();
+  await expect(page.locator('.preview-limit-note')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Download PDF' })).toBeEnabled();
   const prefixToggle = await page.getByRole('checkbox', { name: 'Show prefix 1' }).boundingBox();
   expect(prefixToggle?.width).toBeLessThanOrEqual(24);
