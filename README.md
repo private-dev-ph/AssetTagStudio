@@ -29,6 +29,8 @@ Choose **Try sample data**, select a unique identifier, edit the visible fields,
 
 [Example PDF](docs/media/sample-labels.pdf). Live deployment setup is in [deployment.md](docs/deployment.md); no unverified demo URL is advertised.
 
+The screenshots, 9.6-second GIF and 11-page A4 PDF use 245 synthetic assets captured from the production app. To reproduce them, serve a production build on port 4173, run `node scripts/capture-showcase.mjs`, then `python scripts/assemble-demo.py` with Pillow installed. Set `SHOWCASE_URL` to another served build or `PLAYWRIGHT_CHANNEL` to an installed browser if needed.
+
 ## Privacy
 
 Records stay in browser memory; only preferences persist. No analytics, remote processing or spreadsheet-content requests. Reload clears records. See [privacy](docs/privacy.md).
