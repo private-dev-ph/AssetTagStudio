@@ -58,14 +58,14 @@ function parseTemplate(value: unknown): LabelTemplate {
   const heightMm = boundedNumber(input.heightMm, 'template.heightMm', 10, 200);
   const paddingMm = boundedNumber(input.paddingMm, 'template.paddingMm', 0, Math.min(widthMm, heightMm) / 3);
   const fieldsInput = input.fields;
-  if (!Array.isArray(fieldsInput) || fieldsInput.length > 6) throw new Error('template.fields must contain at most 6 fields.');
+  if (!Array.isArray(fieldsInput) || fieldsInput.length > 32) throw new Error('template.fields must contain at most 32 fields.');
   const fields = fieldsInput.map((candidate, index) => {
     const field = record(candidate, `template.fields[${index}]`);
     exactKeys(field, FIELD_KEYS, `template.fields[${index}]`);
     return {
       source: boundedString(field.source, `template.fields[${index}].source`, 200, false),
       label: boundedString(field.label, `template.fields[${index}].label`, 200),
-      fontSize: boundedNumber(field.fontSize, `template.fields[${index}].fontSize`, 5, 30),
+      fontSize: boundedNumber(field.fontSize, `template.fields[${index}].fontSize`, 5, 48),
       bold: boolean(field.bold, `template.fields[${index}].bold`),
     };
   });

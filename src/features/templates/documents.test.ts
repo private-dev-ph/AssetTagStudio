@@ -6,6 +6,12 @@ import { BUILT_IN_TEMPLATES } from '../../studio/pages/TemplatesPage';
 const VALID_TEMPLATE = { ...DEFAULT_TEMPLATE, code: { ...DEFAULT_TEMPLATE.code, field: 'Asset ID' } };
 
 describe('template documents', () => {
+  it('preserves all seven hierarchy fields within the renderer bounds', () => {
+    const fields = ['Site', 'Building', 'Floor', 'Room', 'Rack', 'Shelf', 'Bin'].map(source => ({ source, label: source, fontSize: 14, bold: true }));
+    const template = { ...VALID_TEMPLATE, heightMm: 80, fields };
+    expect(parseTemplateDocument(serializeTemplateDocument('Hierarchy', template)).template.fields).toEqual(fields);
+    expect(() => serializeTemplateDocument('Too many', { ...template, fields: Array.from({ length: 33 }, () => fields[0]) })).toThrow(/32 fields/);
+  });
   it('round trips a settings-only version 1 document without changing its input', () => {
     const source = structuredClone(VALID_TEMPLATE);
     const json = serializeTemplateDocument('Receiving', source, DEFAULT_PAGE);
