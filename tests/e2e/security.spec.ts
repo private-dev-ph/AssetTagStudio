@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import jsQR from 'jsqr';
+import * as XLSX from 'xlsx';
 
 test('rendered QR decodes correctly and inventory stays local', async ({ page }) => {
   const requests: { url: string; method: string; body: string | null }[] = [];
@@ -46,5 +47,21 @@ test('production response applies restrictive security headers',async({request})
   expect(response.headers()['content-security-policy']).toContain("worker-src 'self'");
   expect(response.headers()['x-content-type-options']).toBe('nosniff');
   expect(response.headers()['x-frame-options']).toBe('DENY');
+});
+
+test('legacy XLS imports locally and a malformed workbook recovers', async ({ page }) => {
+  await page.goto('/');
+  const input = page.getByLabel('Choose a CSV or Excel file');
+  await input.setInputFiles({ name: 'broken.xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', buffer: Buffer.from('not a workbook') });
+  await expect(page.getByRole('alert')).toContainText('signature');
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([['asset_id', 'name'], ['LEGACY-001', 'Pump']]), 'Assets');
+  const buffer = Buffer.from(XLSX.write(workbook, { type: 'array', bookType: 'xls' }));
+  await input.setInputFiles({ name: 'legacy.xls', mimeType: 'application/vnd.ms-excel', buffer });
+  await expect(page.getByRole('cell', { name: 'LEGACY-001', exact: true })).toBeVisible();
+  await expect(page.getByRole('img', { name: /Rendered label for/ })).toBeVisible();
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: /Download PDF/ }).click();
+  expect((await downloadPromise).suggestedFilename()).toMatch(/\.pdf$/);
 });
 
