@@ -4,17 +4,20 @@ import { inspectFile, readSheet } from './features/import/client';
 import { validateIdentifiers } from './features/import/normalize';
 import { calculateLayout, inchesToMm, mmToInches } from './features/layout/pageLayout';
 import { renderLabel, validateTemplate } from './features/labels/renderer';
-import { generatePdf } from './features/export/pdf';
+import { generatePrintJobPdf } from './features/export/pdf';
 import { loadPreferences, savePreferences, type Preferences } from './features/preferences/store';
 import { UndoHistory } from './core/dataset';
 import { downloadFile } from './core/download';
-import type { PrintJob } from './core/printJob';
+import { createPrintJob, type PrintJob } from './core/printJob';
 import type { StudioPageProps, StudioView } from './studio/contracts';
 import { NAVIGATION, checkTemplateMapping, estimateSnapshot, transformedWorkspace, viewFromHash, type WorkspaceSnapshot } from './studio/workspace';
 import { PayloadPage } from './studio/pages/PayloadPage';
 import { TemplatesPage } from './studio/pages/TemplatesPage';
 import { InspectorPage } from './studio/pages/InspectorPage';
-import { ToolFrame } from './studio/ui';
+import { DataToolsPage } from './studio/pages/DataToolsPage';
+import { SpecialLabelsPage } from './features/specialized-labels/SpecialLabelsPage';
+import { CalibrationPage } from './features/calibration/CalibrationPage';
+import { ExportToolsPage } from './features/manifest/ExportToolsPage';
 import './styles.css';
 
 const PAGE_PRESETS: Record<string, [number, number]> = { A4: [210, 297], A5: [148, 210], Letter: [215.9, 279.4] };
@@ -193,7 +196,7 @@ function App() {
     setSearch(''); setSort({ key: '', dir: 1 }); setPageNumber(0); setTablePage(0);
     setHiddenFields((current) => new Set([...current].filter((field) => next.columns.includes(field))));
     setTemplate((current) => {
-      const fields = current.fields.filter((field) => next.columns.includes(field.source)).slice(0, 6);
+      const fields = current.fields.filter((field) => next.columns.includes(field.source)).slice(0, 32);
       const payloadIsCompatible = [...current.code.payload.matchAll(/\{([^{}]+)\}/g)].every((match) => next.columns.includes(match[1]));
       return { ...current, code: { ...current.code, field: selectedField, payload: payloadIsCompatible ? current.code.payload : '' }, fields: fields.length ? fields : next.columns.filter((column) => column !== selectedField).slice(0, 2).map((source, index) => ({ source, label: '', fontSize: index === 0 ? 10 : 8, bold: index === 0 })) };
     });
@@ -262,19 +265,22 @@ function App() {
     setExportError(''); setProgress(0);
     const controller = new AbortController(); setExportController(controller);
     try {
-      const bytes = await generatePdf(chosenRecords, effectiveTemplate, page, { signal: controller.signal, onProgress: (complete, total) => setProgress(total ? Math.round((complete / total) * 100) : 100) });
+      const job = createPrintJob(chosenRecords, effectiveTemplate, page, { idField, templateName });
+      const bytes = await generatePrintJobPdf(job, { signal: controller.signal, onProgress: (complete, total) => setProgress(total ? Math.round((complete / total) * 100) : 100) });
+      if (controller.signal.aborted) return null;
       const sourceBuffer = bytes.buffer;
       const pdfBuffer = sourceBuffer instanceof ArrayBuffer && bytes.byteOffset === 0 && bytes.byteLength === sourceBuffer.byteLength
         ? sourceBuffer
         : bytes.slice().buffer as ArrayBuffer;
       const now = new Date(); const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
       downloadFile(pdfBuffer, 'application/pdf', `asset-labels-${localDate}.pdf`);
+      setLastJob(job);
       setProgress(null);
-      return null;
+      return job;
     } catch (reason) {
       if (!controller.signal.aborted) setExportError(reason instanceof Error ? reason.message : 'PDF export failed. Check the page and label settings.');
       setProgress(null);
-    } finally { exportLock.current = false; setExportController(null); }
+    } finally { exportLock.current = false; setExportController(null); setProgress(null); }
     return null;
   }
 
@@ -292,7 +298,7 @@ function App() {
   const studioProps: StudioPageProps = { dataset, selectedIds: selected, idField, template: effectiveTemplate, page, busy: busy || progress !== null, previewImage: previewData, lastJob,
     onCommitDataset: commitDataset, onApplyTemplate: applyTemplate, onPageChange: next => { if (!exportLock.current) setPage(next); },
     onIdentifierChange: field => { if (!exportLock.current && dataset?.columns.includes(field)) { setIdField(field); updateCode({ field }); } },
-    onNavigate: navigate, onUndo: undo, canUndo, onExportJob: exportPdf };
+    onNavigate: navigate, onUndo: undo, canUndo, onExportJob: exportPdf, onPrintJobCompleted: setLastJob };
 
   return <div className="app-shell">
     <header className="topbar">
@@ -310,7 +316,7 @@ function App() {
       {view !== 'asset-labels' && error && <p role="alert" className="alert error-alert">{error}</p>}
       {progress !== null && view !== 'asset-labels' && <div className="alert info-alert" role="status">Preparing PDF {progress}% <button className="secondary-button" onClick={() => exportController?.abort()}>Cancel export</button></div>}
       {exportError && view !== 'asset-labels' && <p role="alert" className="alert error-alert">{exportError}</p>}
-      {view === 'templates' ? <TemplatesPage {...studioProps} /> : view === 'code-inspector' ? <InspectorPage {...studioProps} /> : view === 'payload-builder' ? <PayloadPage {...studioProps} /> : view !== 'asset-labels' ? <ToolFrame title={NAVIGATION.flatMap(group => group.items).find(item => item.view === view)?.title ?? 'Studio'} description="This page is being integrated on the local expansion branch." ><p>The shared dataset and settings remain available in Asset labels.</p></ToolFrame> : <>
+      {view === 'templates' ? <TemplatesPage {...studioProps} /> : view === 'code-inspector' ? <InspectorPage {...studioProps} /> : view === 'payload-builder' ? <PayloadPage {...studioProps} /> : view === 'data-health' || view === 'id-generator' || view === 'serial-tools' ? <DataToolsPage {...studioProps} view={view} /> : view === 'calibration' ? <CalibrationPage {...studioProps} /> : view === 'manifest' || view === 'fieldlens' ? <ExportToolsPage key={view} {...studioProps} mode={view} /> : view === 'cable-labels' || view === 'location-labels' || view === 'codes' ? <SpecialLabelsPage key={view} {...studioProps} mode={view === 'codes' ? 'code' : view === 'cable-labels' ? 'cable' : 'location'} /> : <>
       <section className="intro-row"><div><div className="eyebrow">LOCAL-FIRST LABEL WORKSPACE</div><h1>Turn your asset list into<br /><span>print-ready labels.</span></h1><p>Choose your data, make a label, then export a sheet you can print at actual size.</p></div><div className="step-track" aria-label="Workflow"><span className={dataset ? 'done' : 'active'}><i>1</i> Data</span><b /><span className={dataset ? 'active' : ''}><i>2</i> Design</span><b /><span><i>3</i> Export</span></div></section>
 
       {!dataset ? <section className={`welcome-card ${dragging ? 'dragging' : ''}`} onDragOver={(event) => { event.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={onDrop}>
@@ -386,7 +392,7 @@ function App() {
                 <div className="pagination"><button className="icon-button" aria-label="Previous preview page" disabled={pageNumber <= 0} onClick={() => setPageNumber((value) => Math.max(0, value - 1))}>←</button><span>Preview page <b>{Math.min(pageNumber + 1, Math.max(1, pages))}</b> of {Math.max(1, pages)}</span><button className="icon-button" aria-label="Next preview page" disabled={pageNumber >= pages - 1} onClick={() => setPageNumber((value) => Math.min(pages - 1, value + 1))}>→</button></div>
               </>}
             </section>
-            <section className="export-bar"><div><strong>Ready to print?</strong><span>{chosenRecords.length} labels · print at 100% / actual size</span>{progress !== null && <div className="progress-track" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}><span style={{ width: `${progress}%` }} /></div>}{exportError && <span className="export-error" role="alert">{exportError}</span>}</div><div className="export-actions">{progress !== null && <button className="secondary-button" onClick={() => exportController?.abort()}>Cancel</button>}<button className="primary-button export-button" disabled={!chosenRecords.length || noIdCount > 0 || !idField || Boolean(templateError) || Boolean(layoutError) || busy || progress !== null} onClick={() => void exportPdf()}>{progress !== null ? `Preparing PDF ${progress}%` : 'Download PDF ↓'}</button></div></section>
+            <section className="export-bar"><div><strong>Ready to print?</strong><span>{chosenRecords.length} labels · print at 100% / actual size</span>{progress !== null && <div className="progress-track" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}><span style={{ width: `${progress}%` }} /></div>}{exportError && <span className="export-error" role="alert">{exportError}</span>}</div><div className="export-actions">{progress !== null && <button className="secondary-button" onClick={() => exportController?.abort()}>Cancel</button>}<button className="primary-button export-button" disabled={!chosenRecords.length || (template.code.type !== 'none' && (noIdCount > 0 || !idField)) || Boolean(templateError) || Boolean(layoutError) || busy || progress !== null} onClick={() => void exportPdf()}>{progress !== null ? `Preparing PDF ${progress}%` : 'Download PDF ↓'}</button></div></section>
           </div>
         </div>
       </>}
@@ -401,3 +407,4 @@ function NumberControl({ label, value, min, max, step, unit, onChange }: { label
 }
 
 export default App;
+

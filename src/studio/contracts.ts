@@ -10,4 +10,5 @@ export type StudioPageProps = {
   onPageChange: (page: PageSettings) => void; onIdentifierChange: (field: string) => void;
   onNavigate: (view: StudioView) => void; onUndo: () => void; canUndo: boolean;
   onExportJob: () => Promise<PrintJob | null>;
+  onPrintJobCompleted?: (job: PrintJob) => void;
 };
