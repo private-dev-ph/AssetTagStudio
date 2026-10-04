@@ -16,3 +16,5 @@
 
 See handoff.md for exact SHAs, worktree paths, failed checks, contracts and next action.
 
+
+| PDF peak memory | reduce-pdf-memory | Ready to merge | export/pdf.ts, PDF tests/docs | 40 unit tests, types/lint/build pass | Eager public image.embed releases decoded channels; compressed final PDF remains in memory | Pending |
