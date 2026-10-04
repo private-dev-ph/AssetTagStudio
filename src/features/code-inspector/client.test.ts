@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { decodeImageData } from './client';
+import { decodeImageData, decodeImageFile } from './client';
+import { MAX_IMAGE_BYTES } from './image';
 class DecoderWorker {
   static current: DecoderWorker;
   onmessage: ((event: { data: unknown }) => void) | null = null;
@@ -10,6 +11,30 @@ class DecoderWorker {
 const image = { width: 1, height: 1, data: new Uint8ClampedArray(4) } as ImageData;
 afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); });
 describe('bounded decoder lifecycle', () => {
+  it('keeps file preprocessing inside the timed and cancellable worker', async () => {
+    vi.useFakeTimers(); vi.stubGlobal('Worker', DecoderWorker);
+    const file = new Blob(['image']);
+    const read = vi.spyOn(file, 'arrayBuffer');
+    const controller = new AbortController();
+    const pending = decodeImageFile(file, controller.signal, 100);
+    expect(DecoderWorker.current.postMessage).toHaveBeenCalledWith({ file }, []);
+    expect(read).not.toHaveBeenCalled();
+    controller.abort();
+    await expect(pending).rejects.toThrow(/cancelled/);
+    expect(DecoderWorker.current.terminate).toHaveBeenCalledOnce();
+    const stalled = decodeImageFile(file, new AbortController().signal, 100);
+    const assertion = expect(stalled).rejects.toThrow(/timed out/);
+    await vi.advanceTimersByTimeAsync(101); await assertion;
+    expect(DecoderWorker.current.terminate).toHaveBeenCalledOnce();
+  });
+  it('rejects oversized or already cancelled files without starting a worker', async () => {
+    const constructor = vi.fn(); vi.stubGlobal('Worker', constructor);
+    await expect(decodeImageFile({ size: MAX_IMAGE_BYTES + 1 } as Blob, new AbortController().signal)).rejects.toThrow(/10 MiB/);
+    const controller = new AbortController(); controller.abort();
+    await expect(decodeImageFile(new Blob(['image']), controller.signal)).rejects.toThrow(/cancelled/);
+    expect(constructor).not.toHaveBeenCalled();
+  });
+
   it('terminates on completion and returns only valid results', async () => {
     vi.stubGlobal('Worker', DecoderWorker);
     const result = decodeImageData(image, new AbortController().signal);

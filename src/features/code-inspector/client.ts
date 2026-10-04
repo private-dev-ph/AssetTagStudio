@@ -1,5 +1,14 @@
 import type { DecodedCode } from './decode';
+import { MAX_IMAGE_BYTES } from './image';
 export function decodeImageData(image: ImageData, signal: AbortSignal, timeoutMs = 5000): Promise<DecodedCode> {
+  const pixels = image.data.slice().buffer;
+  return decodeRequest({ pixels, width: image.width, height: image.height }, signal, timeoutMs, [pixels]);
+}
+export function decodeImageFile(file: Blob, signal: AbortSignal, timeoutMs = 5000): Promise<DecodedCode> {
+  if (file.size > MAX_IMAGE_BYTES) return Promise.reject(new Error('Image must be 10 MiB or smaller.'));
+  return decodeRequest({ file }, signal, timeoutMs);
+}
+function decodeRequest(request: { file: Blob } | { pixels: ArrayBuffer; width: number; height: number }, signal: AbortSignal, timeoutMs: number, transfer: Transferable[] = []): Promise<DecodedCode> {
   if (signal.aborted) return Promise.reject(new Error('Inspection cancelled.'));
   return new Promise((resolve, reject) => {
     const worker = new Worker(new URL('./decoder.worker.ts', import.meta.url), { type: 'module' });
@@ -17,7 +26,7 @@ export function decodeImageData(image: ImageData, signal: AbortSignal, timeoutMs
       else if (event.data.result && typeof event.data.result.text === 'string' && ['QR_CODE', 'CODE_128'].includes(event.data.result.format)) finish(undefined, event.data.result);
       else finish(new Error('The decoder returned an invalid result.'));
     };
-    try { const pixels = image.data.slice().buffer; worker.postMessage({ pixels, width: image.width, height: image.height }, [pixels]); }
+    try { worker.postMessage(request, transfer); }
     catch { finish(new Error('This image could not be sent to the local decoder.')); }
   });
 }

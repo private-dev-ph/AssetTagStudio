@@ -24,11 +24,23 @@ export function imageDimensions(bytes: Uint8Array): { width: number; height: num
   if (width * height > MAX_IMAGE_PIXELS || width > 16000 || height > 16000) throw new Error('Image exceeds 8 megapixels. Crop or resize it before inspecting.');
   return { width, height };
 }
-export async function filePixels(file: Blob): Promise<ImageData> {
+// Called only inside the terminable decoder worker. Its client deadline covers
+// file reads, native bitmap decoding, canvas allocation/readback and decoding.
+export async function workerFilePixels(file: Blob): Promise<ImageData> {
   if (file.size > MAX_IMAGE_BYTES) throw new Error('Image must be 10 MiB or smaller.');
   imageDimensions(new Uint8Array(await file.arrayBuffer()));
-  const bitmap = await createImageBitmap(file);
-  try { return sourcePixels(bitmap, bitmap.width, bitmap.height); } finally { bitmap.close(); }
+  let bitmap: ImageBitmap;
+  try { bitmap = await createImageBitmap(file); }
+  catch { throw new Error('Could not read this PNG or JPEG. Use a valid image and retry.'); }
+  try {
+    if (!bitmap.width || !bitmap.height || bitmap.width * bitmap.height > MAX_IMAGE_PIXELS) throw new Error('Image exceeds 8 megapixels. Crop or resize it before inspecting.');
+    const scale = Math.min(1, 2048 / Math.max(bitmap.width, bitmap.height));
+    const canvas = new OffscreenCanvas(Math.max(1, Math.round(bitmap.width * scale)), Math.max(1, Math.round(bitmap.height * scale)));
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    if (!context) throw new Error('This browser does not support local worker image inspection.');
+    context.fillStyle = '#fff'; context.fillRect(0, 0, canvas.width, canvas.height); context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    return context.getImageData(0, 0, canvas.width, canvas.height);
+  } finally { bitmap.close(); }
 }
 export function sourcePixels(source: CanvasImageSource, width: number, height: number): ImageData {
   if (!width || !height || width * height > MAX_IMAGE_PIXELS) throw new Error('Image dimensions are unsupported.');
