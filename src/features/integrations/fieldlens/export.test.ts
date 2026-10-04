@@ -18,6 +18,7 @@ describe('FieldLens print package', () => {
     expect(() => { job.records[0]!.values.ID = 'changed'; }).toThrow();
   });
   it('rejects duplicates, missing mappings, formula-leading IDs, and incompatible URI values', () => {
+    expect(() => prepareFieldLensJob(dataset, new Set(), mapping, DEFAULT_TEMPLATE, DEFAULT_PAGE)).toThrow(/Select at least one/);
     expect(() => prepareFieldLensJob(dataset, new Set(['not-current']), mapping, DEFAULT_TEMPLATE, DEFAULT_PAGE)).toThrow(/no longer in the current dataset/);
     expect(() => prepareFieldLensJob({ ...dataset, records: [dataset.records[0]!, { ...dataset.records[0]!, id: 'row-c' }] }, new Set(['row-a', 'row-c']), mapping, DEFAULT_TEMPLATE, DEFAULT_PAGE)).toThrow(/appears more than once/);
     expect(() => prepareFieldLensJob(dataset, new Set(['row-a']), { ...mapping, nameField: '' }, DEFAULT_TEMPLATE, DEFAULT_PAGE)).toThrow(/Map a valid name/);
