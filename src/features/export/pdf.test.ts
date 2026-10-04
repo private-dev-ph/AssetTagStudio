@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, PDFPage } from 'pdf-lib';
 import type { AssetRecord, LabelTemplate, PageSettings } from '../../types';
 import { DEFAULT_TEMPLATE } from '../../types';
-import { generatePdf } from './pdf';
+import { generatePdf, generatePrintJobPdf } from './pdf';
+import { createPrintJob } from '../../core/printJob';
+import { manifestFromPrintJob } from '../manifest/manifest';
 
 const renderLabel = vi.hoisted(() => vi.fn());
 vi.mock('../labels/renderer', async () => {
@@ -21,6 +23,25 @@ const records: AssetRecord[] = [{ id: 'a', values: { ID: 'A' } }, { id: 'b', val
 afterEach(() => renderLabel.mockReset());
 
 describe('PDF generation', () => {
+  it('draws the exact signed-calibrated manifest placements across pages', async () => {
+    renderLabel.mockResolvedValue(onePixelPng);
+    const job = createPrintJob(records, template, { ...page, offsetXMm: 0.5, offsetYMm: -0.25 });
+    const manifest = manifestFromPrintJob(job);
+    const draw = vi.spyOn(PDFPage.prototype, 'drawImage');
+    try {
+      const bytes = await generatePrintJobPdf(job);
+      expect((await PDFDocument.load(bytes)).getPageCount()).toBe(2);
+      expect(draw).toHaveBeenCalledTimes(manifest.records.length);
+      manifest.records.forEach((row, index) => {
+        const placement = draw.mock.calls[index]![1]!;
+        expect(placement.x).toBeCloseTo(row.xMm * 72 / 25.4, 10);
+        expect(placement.y).toBeCloseTo(page.heightMm * 72 / 25.4 - (row.yMm + template.heightMm) * (72 / 25.4), 10);
+        expect(placement.width).toBeCloseTo(template.widthMm * (72 / 25.4), 10);
+        expect(placement.height).toBeCloseTo(template.heightMm * (72 / 25.4), 10);
+      });
+    } finally { draw.mockRestore(); }
+  });
+
   it('keeps physical page dimensions, pagination, and progress ordering', async () => {
     renderLabel.mockResolvedValue(onePixelPng);
     const progress: number[] = [];

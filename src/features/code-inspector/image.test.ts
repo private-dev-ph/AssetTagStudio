@@ -1,6 +1,20 @@
-import { describe, expect, it } from 'vitest';
-import { imageDimensions, previewBlob } from './image';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { imageDimensions, previewBlob, workerFilePixels } from './image';
+afterEach(() => vi.unstubAllGlobals());
 describe('image preflight resource bounds', () => {
+  it('closes native bitmaps on canvas failure and checks decoded dimensions again', async () => {
+    const bytes = new Uint8Array(24); bytes.set([137, 80, 78, 71, 13, 10, 26, 10]);
+    const view = new DataView(bytes.buffer); view.setUint32(16, 100); view.setUint32(20, 100);
+    const bitmap = { width: 100, height: 100, close: vi.fn() };
+    vi.stubGlobal('createImageBitmap', vi.fn().mockResolvedValue(bitmap));
+    vi.stubGlobal('OffscreenCanvas', class { getContext() { return null; } });
+    await expect(workerFilePixels(new Blob([bytes]))).rejects.toThrow(/worker image inspection/);
+    expect(bitmap.close).toHaveBeenCalledOnce();
+    bitmap.width = 9000; bitmap.height = 9000;
+    await expect(workerFilePixels(new Blob([bytes]))).rejects.toThrow(/8 megapixels/);
+    expect(bitmap.close).toHaveBeenCalledTimes(2);
+  });
+
   it('rejects unsupported/malformed images before browser image decoding', () => {
     expect(() => imageDimensions(new TextEncoder().encode('<svg></svg>'))).toThrow(/PNG or JPEG/);
     expect(() => imageDimensions(new Uint8Array([255, 216, 255, 192, 0, 1]))).toThrow();

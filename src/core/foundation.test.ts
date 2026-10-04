@@ -39,6 +39,7 @@ describe('expansion foundation', () => {
     expect(() => resolveCodePayload(dataset.records[0], { ...code, payload: 'x'.repeat(2001) })).toThrow(/2,000/);
     validatePayloadUri('fieldlens://asset/PC-001', 'fieldlens');
     validatePayloadUri('location://warehouse-a/rack-a/bin-07', 'location');
+    expect(() => validatePayloadUri('location://warehouse-a//bin-07', 'location')).toThrow(/empty segment/);
   });
   it('quotes CSV content and neutralizes spreadsheet formula prefixes', () => {
     expect(csvText([['=HYPERLINK("x")', 'a,b', 'A-1']])).toContain('"\'=HYPERLINK(""x"")"');

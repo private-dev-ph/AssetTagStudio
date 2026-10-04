@@ -31,6 +31,11 @@ export function calculateLayout(template: LabelTemplate, page: PageSettings, cou
       throw new Error(`${name} must be a finite number between 0 and ${MAX_PAGE_MM} mm.`);
     }
   }
+  const offsetX = page.offsetXMm ?? 0;
+  const offsetY = page.offsetYMm ?? 0;
+  for (const [name, value] of [['Horizontal calibration offset', offsetX], ['Vertical calibration offset', offsetY]] as const) {
+    if (!Number.isFinite(value) || Math.abs(value) > 100) throw new Error(`${name} must be a finite value between -100 and 100 mm.`);
+  }
   if (!Number.isInteger(count) || count < 0 || count > MAX_RECORDS) {
     throw new Error(`Record count must be a whole number between 0 and ${MAX_RECORDS.toLocaleString()}.`);
   }
@@ -48,8 +53,11 @@ export function calculateLayout(template: LabelTemplate, page: PageSettings, cou
   }
   if (labelsPerPage > MAX_POSITIONS) throw new Error(`This page would require ${labelsPerPage.toLocaleString()} label positions. Increase label size or page margins.`);
   const positions = Array.from({ length: labelsPerPage }, (_, index) => ({
-    xMm: page.marginLeftMm + (index % columns) * (template.widthMm + page.gapXMm),
-    yMm: page.marginTopMm + Math.floor(index / columns) * (template.heightMm + page.gapYMm),
+    xMm: page.marginLeftMm + (index % columns) * (template.widthMm + page.gapXMm) + offsetX,
+    yMm: page.marginTopMm + Math.floor(index / columns) * (template.heightMm + page.gapYMm) + offsetY,
   }));
+  if (positions.some(({ xMm, yMm }) => xMm < 0 || yMm < 0 || xMm + template.widthMm > page.widthMm || yMm + template.heightMm > page.heightMm)) {
+    throw new Error('Printer calibration moves a label off the page. Adjust the offset or margins to prevent clipping.');
+  }
   return { columns, rows, labelsPerPage, pages: count === 0 ? 0 : Math.ceil(count / labelsPerPage), positions };
 }

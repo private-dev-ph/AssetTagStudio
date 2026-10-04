@@ -24,7 +24,7 @@ export function validatePayloadUri(payload: string, mode: NonNullable<LabelTempl
     // FieldLens's current mobile resolver explicitly rejects percent-encoded IDs.
     if (mode === 'fieldlens' && (uri.hostname.toLowerCase() !== 'asset' || !/^fieldlens:\/\/asset\/[^/\\?#%]+$/i.test(payload))) throw new Error('FieldLens URI needs one unescaped identifier: no %, slash, whitespace, query or fragment.');
     const parts = [uri.hostname, ...uri.pathname.split('/').filter(Boolean)];
-    if (mode === 'location' && uri.pathname.endsWith('/')) throw new Error('Location hierarchy cannot end with an empty segment.');
+    if (mode === 'location' && (uri.pathname.endsWith('/') || uri.pathname.includes('//'))) throw new Error('Location hierarchy cannot contain an empty segment.');
     for (const part of parts) {
       let decoded: string;
       try { decoded = decodeURIComponent(part); } catch { throw new Error('URI contains malformed percent encoding.'); }

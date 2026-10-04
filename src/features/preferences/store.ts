@@ -11,7 +11,7 @@ function readTemplate(value: unknown): LabelTemplate {
   if (typeof value !== 'object' || value === null) return DEFAULT_TEMPLATE;
   const candidate = value as Record<string, unknown>;
   const code = typeof candidate.code === 'object' && candidate.code !== null ? candidate.code as Record<string, unknown> : {};
-  const fields = Array.isArray(candidate.fields) ? candidate.fields.slice(0, 6).flatMap((item): LabelTemplate['fields'] => {
+  const fields = Array.isArray(candidate.fields) ? candidate.fields.slice(0, 32).flatMap((item): LabelTemplate['fields'] => {
     if (typeof item !== 'object' || item === null) return [];
     const field = item as Record<string, unknown>;
     if (typeof field.source !== 'string' || typeof field.label !== 'string' || !finite(field.fontSize, 5, 30) || typeof field.bold !== 'boolean') return [];
@@ -23,13 +23,16 @@ function readTemplate(value: unknown): LabelTemplate {
     paddingMm: finite(candidate.paddingMm, 0, 30) ? candidate.paddingMm : DEFAULT_TEMPLATE.paddingMm,
     border: typeof candidate.border === 'boolean' ? candidate.border : DEFAULT_TEMPLATE.border,
     alignment: candidate.alignment === 'center' || candidate.alignment === 'right' ? candidate.alignment : 'left',
+    ...(candidate.mode === 'cable' || candidate.mode === 'location' || candidate.mode === 'code' || candidate.mode === 'asset' ? { mode: candidate.mode } : {}),
+    ...(candidate.textLayout === 'mirrored' ? { textLayout: 'mirrored' as const } : {}),
     fields,
     code: {
-      type: code.type === 'code128' ? 'code128' : 'qr',
+      type: code.type === 'code128' ? 'code128' : code.type === 'none' ? 'none' : 'qr',
       field: typeof code.field === 'string' ? code.field.slice(0, 200) : '',
       sizeMm: finite(code.sizeMm, 8, 60) ? code.sizeMm : DEFAULT_TEMPLATE.code.sizeMm,
       barcodeScale: finite(code.barcodeScale, 0.8, 3) ? code.barcodeScale : 1,
       payload: typeof code.payload === 'string' && code.payload.length <= 2000 ? code.payload : '',
+      ...(code.payloadMode === 'url' || code.payloadMode === 'fieldlens' || code.payloadMode === 'location' || code.payloadMode === 'text' ? { payloadMode: code.payloadMode } : {}),
       barcodeHeightMm: finite(code.barcodeHeightMm, 5, 40) ? code.barcodeHeightMm : DEFAULT_TEMPLATE.code.barcodeHeightMm,
       barcodeText: typeof code.barcodeText === 'boolean' ? code.barcodeText : true,
       barcodeTextPosition: code.barcodeTextPosition === 'top' ? 'top' : 'bottom',
@@ -41,7 +44,7 @@ function readPage(value: unknown): PageSettings {
   const candidate = value as Record<string, unknown>;
   const dimension = (key: string, fallback: number, max: number, min = 0) => finite(candidate[key], min, max) ? candidate[key] as number : fallback;
   const preset = candidate.preset === 'A5' || candidate.preset === 'Letter' || candidate.preset === 'Custom' ? candidate.preset : 'A4';
-  return { preset, widthMm: dimension('widthMm', DEFAULT_PAGE.widthMm, 500, 1), heightMm: dimension('heightMm', DEFAULT_PAGE.heightMm, 700, 1), marginTopMm: dimension('marginTopMm', 10, 100), marginBottomMm: dimension('marginBottomMm', 10, 100), marginLeftMm: dimension('marginLeftMm', 10, 100), marginRightMm: dimension('marginRightMm', 10, 100), gapXMm: dimension('gapXMm', 3, 50), gapYMm: dimension('gapYMm', 3, 50) };
+  return { preset, widthMm: dimension('widthMm', DEFAULT_PAGE.widthMm, 500, 1), heightMm: dimension('heightMm', DEFAULT_PAGE.heightMm, 700, 1), marginTopMm: dimension('marginTopMm', 10, 100), marginBottomMm: dimension('marginBottomMm', 10, 100), marginLeftMm: dimension('marginLeftMm', 10, 100), marginRightMm: dimension('marginRightMm', 10, 100), gapXMm: dimension('gapXMm', 3, 50), gapYMm: dimension('gapYMm', 3, 50), ...(finite(candidate.offsetXMm, -100, 100) ? { offsetXMm: candidate.offsetXMm } : {}), ...(finite(candidate.offsetYMm, -100, 100) ? { offsetYMm: candidate.offsetYMm } : {}) };
 }
 
 export function parsePreferences(raw: string | null): Preferences {

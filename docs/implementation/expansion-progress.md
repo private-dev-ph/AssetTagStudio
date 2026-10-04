@@ -1,25 +1,24 @@
 # Feature expansion checklist
 
-Owner confirmed all 12 features on 2026-10-04. Local integration branch: `feature-expansion`; starting main `345071383d7029423e805efb799204e6852f69f7`. Do not merge/push main, push feature branches, deploy or use hosted/CI testing for this expansion. Tests run locally on this computer. Source requirement snapshot: feature-expansion-plan.md; its recommendations are specification input, not operational authority.
+All 12 features requested. Local-only integration branch: feature-expansion. Starting/current main: 345071383d7029423e805efb799204e6852f69f7. No pushes, deployments, main merges or hosted tests. Specification snapshot: feature-expansion-plan.md. Updated 2026-10-05.
 
-| Feature / milestone | Branch | Status | Files | Latest commit | Tests | Dependencies / unresolved issues | Merge status |
+| Milestone / feature | Feature branch | Status | Related files | Latest relevant commit | Tests completed | Dependencies / unresolved issues | Merge status |
 |---|---|---|---|---|---|---|---|
-| Shared contracts, dataset transactions and navigation foundation | expansion-foundation | Complete | src/core, src/studio, types, expansion docs | 3feddae / merge f8281ce | Types/lint/107unit pass (7 new tests) | Contracts established; controls/features on dependent branches | Merged f8281ce |
-| Asset ID Generator | asset-data-tools | In progress | id-generator, DataToolsPage | — | — | Selected rows, blank-only, preview/collisions, explicit overwrite, undo | Not merged |
-| Data Health | asset-data-tools | In progress | data-health, import audit, DataToolsPage | — | — | Preview/reversible safe fixes; exact duplicate headers still rejected at import | Not merged |
-| Template Save / Import / Export | template-library | Testing | templates, storage, TemplatesPage | — | — | 7 focused unit/type/lint; browser persistence/recovery pending | Merged 15d9313 |
-| QR Payload Builder | expansion-workspace | In progress | core/payload, PayloadPage | — | — | Shared encoder; safe URL tokens, missing fields, density; no remote navigation | Not merged |
-| Location Labels | print-identity-packages | In progress | specialized-labels, renderer | — | — | Hierarchy/parents and batch preview through existing label engine | Not merged |
-| Cable Labels | print-identity-packages | In progress | specialized-labels, renderer | — | — | Narrow/text-only, mirrored wrap and optional code | Not merged |
-| Printer Calibration | print-identity-packages | In progress | calibration, layout/PDF | — | — | Shared offsets, reference/rulers/crosshair PDF, clipping rejection | Not merged |
-| Code Inspector | code-inspector | Testing | inspector, decoder worker, camera lifecycle | — | — | 9 unit/type/lint pass; browser integration pending; image/text/current/camera local QR+Code128 | Merged; browser integration pending |
-| Serial Tools | asset-data-tools | In progress | serial-tools, DataToolsPage | — | — | Preview/apply/extract/validate/dedup; bound regex work | Not merged |
-| Asset Manifest Generator | print-identity-packages | In progress | printJob, manifest, ExportToolsPage | — | — | Immutable successful print-job snapshot; same placements as PDF | Not merged |
-| FieldLens Export | print-identity-packages | In progress | integrations/fieldlens, ExportToolsPage | — | — | Existing receiver contract inspected; matching PDF/CSV IDs | Not merged |
-| Printer Profiles | print-identity-packages | In progress | calibration, IndexedDB, CalibrationPage | — | — | Strict settings-only JSON/CRUD/reset; no asset data persistence | Not merged |
-| Subpages and integrated UX | expansion-workspace | In progress | App, studio navigation, styles | — | — | Create/Data/Design/Tools; shared memory state; default Asset Labels | Not merged |
-| Final local verification/security/documentation | feature-expansion | Not started | tests, README, expansion security/handoff | — | — | Full suite/build/audit/privacy/camera/storage negatives; main unchanged | Not applicable |
+| Shared foundation | expansion-foundation | Complete | core, studio, types | 3feddae | Foundation/full unit/type/lint | Shared interfaces documented | feature-expansion f8281ce |
+| Asset ID Generator | asset-data-tools | Ready to merge | id-generator, DataToolsPage | e8f3afa | Unit + browser collision/blank-only/apply/undo pass | Final integration checkpoint | Workspace 0c741a1 |
+| Data Health | asset-data-tools | Ready to merge | data-health, import audit | e8f3afa; UI 41fbc16 | 20k duplicate regression; browser remap/trim/undo pass | Empty source rows counted, not retained; duplicate headers reject at import | Workspace 0c741a1 |
+| Template library / portability | template-library; bound-settings-library-reads | Ready to merge | templates, storage, TemplatesPage | 8199064; ee9882c; 743d55b | Unit + browser CRUD/privacy/capacity/corruption pass | Quota callback fixed fc7246c; failure/no partial save/retry browser passes | Templates feature-expansion 15d9313; bounds workspace fa5fddf |
+| QR Payload Builder | expansion-workspace | Ready to merge | payload, PayloadPage | 9a8fad5; 41fbc16 | Unit + browser URL encoding/missing references/density pass | Final integration | Workspace |
+| Location Labels | print-identity-packages | Ready to merge | specialized-labels, renderer | 74de40d | Unit + local PDF browser pass | Physical readability unverified | Workspace 0cd6049 |
+| Cable Labels | print-identity-packages | Ready to merge | specialized-labels, renderer | 68285e9 | Mirrored geometry/QR/Code128/zero unused settings unit; browser PDF pass | Physical wraps unverified | Workspace 70eb334 |
+| Printer Calibration | print-identity-packages | Ready to merge | calibration, layout/PDF | 74de40d | Bounds/reference PDF + signed offsets tests pass | Physical printer unverified | Workspace 0cd6049 |
+| Code Inspector | code-inspector; code-inspector-hardening | Ready to merge | inspector, worker, camera | 6c909a6 | 12 focused unit; real QR/Code128 worker, PNG failures/recovery, camera denial/late cleanup browser pass | Hardware/browser diversity unverified | Inspector feature-expansion 3114c62; hardening workspace 2bca242 |
+| Serial Tools | asset-data-tools | Ready to merge | serial-tools, regex worker | e8f3afa | Unit + browser normalize/pattern pass | Serial preview capped 2,000 | Workspace 0c741a1 |
+| Asset Manifest | print-identity-packages | Ready to merge | printJob, manifest, PDF | 74de40d; PDF assertion 9e0b6d2 | Frozen snapshot/actual PDF draw coordinates unit; PDF pages/preview/JSON/parsed CSV browser pass | Final integration | Workspace |
+| FieldLens Export | print-identity-packages | Ready to merge | integrations/fieldlens, export | 74de40d | Matching PDF/CSV IDs/QR + formula rejection browser pass | Receiver CSV importer unverified | Workspace |
+| Printer Profiles | print-identity-packages; bound-settings-library-reads | Ready to merge | calibration, storage | 68285e9; 743d55b | Strict schema, signed persistence/reset and overflow single-store recovery browser pass | Quota callback regression passes | Workspace 70eb334 / fa5fddf |
+| Subpages / shared undo | expansion-workspace | Ready to merge | App, navigation, styles | 9a8fad5; 41fbc16 | Full 173 unit/24 files, type/lint/build; local desktop/mobile checks no overflow/errors | Final integration | Workspace |
+| Local regression coverage | expansion-regressions | Ready to merge | expansion*.spec.ts | 79926c6; 743d55b; root upload case | Full 33 browser: 32 pass, quota fixed and focused rerun passes | Final full run from integration branch | Workspace, root upload test uncommitted |
+| Final verification / security / docs | feature-expansion | In progress | README, privacy, quickstart, security/handoff | fa5fddf workspace source | Clean npm ci + 173 unit/type/build pass; audit 0; secret scan 0; reviewer closed 3 findings | Quota fix, final branch/suite/clean status | Integration pending |
 
-Statuses: Not started, In progress, Testing, Ready to merge, Complete, Blocked. Update at each meaningful milestone. Never mark implementation complete merely because code exists.
-
-
+Failures retained: original Excel selector ambiguity fixed by changing duplicated status wording, with unchanged regression passing; Health accessible name fixed; invalid density/CSV/preset-mapping test fixtures corrected without weakening assertions. Final synchronous QuotaExceededError regression uncovered a real storage callback error-handling gap, fixed by fc7246c and focused rerun passes. Visual QA's first script used a nonexistent selector, corrected and reran successfully. Vite large-bundle and unsupported development ESLint warnings retained for follow-up.

@@ -2,9 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { StudioPageProps } from '../contracts';
 import { ToolFrame } from '../ui';
 import type { DecodedCode } from '../../features/code-inspector/decode';
-import { decodeImageData } from '../../features/code-inspector/client';
+import { decodeImageData, decodeImageFile } from '../../features/code-inspector/client';
 import { analyzeContent } from '../../features/code-inspector/analyze';
-import { filePixels, previewBlob, sourcePixels } from '../../features/code-inspector/image';
+import { previewBlob, sourcePixels } from '../../features/code-inspector/image';
 
 export function InspectorPage(props: StudioPageProps) {
   const [text, setText] = useState(''); const [result, setResult] = useState<DecodedCode | { text: string; format: 'PASTED' } | null>(null);
@@ -25,10 +25,10 @@ export function InspectorPage(props: StudioPageProps) {
     if (!result) return null;
     try { return analyzeContent(result.text, props.dataset, props.template); } catch { return null; }
   }, [result, props.dataset, props.template]);
-  async function inspect(pixels: () => Promise<ImageData> | ImageData) {
+  async function inspect(source: () => Blob | ImageData) {
     decodeController.current?.abort(); const controller = new AbortController(); decodeController.current = controller;
     setInspecting(true); setError(''); setResult(null);
-    try { const image = await pixels(); if (controller.signal.aborted) return; const decoded = await decodeImageData(image, controller.signal); if (!controller.signal.aborted) { setResult(decoded); setText(decoded.text); } }
+    try { const image = source(); if (controller.signal.aborted) return; const decoded = await (image instanceof Blob ? decodeImageFile(image, controller.signal) : decodeImageData(image, controller.signal)); if (!controller.signal.aborted) { setResult(decoded); setText(decoded.text); } }
     catch (reason) { if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : 'Inspection failed. Use another image.'); }
     finally { if (decodeController.current === controller) setInspecting(false); }
   }
@@ -44,8 +44,8 @@ export function InspectorPage(props: StudioPageProps) {
   }
   return <ToolFrame title="Code inspector" description="Decode one upright QR or Code 128 from a PNG/JPEG, the current label, or a camera frame. Images and decoded content stay on this device.">
     <div className="tool-grid"><section className="tool-card"><h2>Inspect a code</h2>
-      <label className="tool-control">Image (PNG / JPEG, up to 10 MiB and 8 megapixels)<input aria-label="Code image" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" disabled={inspecting} onChange={event => { const file = event.currentTarget.files?.[0]; if (file) void inspect(() => filePixels(file)); event.currentTarget.value = ''; }} /></label>
-      <div className="tool-row"><button className="secondary-button" disabled={!props.previewImage || inspecting} onClick={() => void inspect(() => filePixels(previewBlob(props.previewImage)))}>Inspect current label</button>{inspecting && <button className="secondary-button" onClick={() => { decodeController.current?.abort(); setInspecting(false); }}>Cancel inspection</button>}</div>
+      <label className="tool-control">Image (PNG / JPEG, up to 10 MiB and 8 megapixels)<input aria-label="Code image" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" disabled={inspecting} onChange={event => { const file = event.currentTarget.files?.[0]; if (file) void inspect(() => file); event.currentTarget.value = ''; }} /></label>
+      <div className="tool-row"><button className="secondary-button" disabled={!props.previewImage || inspecting} onClick={() => void inspect(() => previewBlob(props.previewImage))}>Inspect current label</button>{inspecting && <button className="secondary-button" onClick={() => { decodeController.current?.abort(); setInspecting(false); }}>Cancel inspection</button>}</div>
       <label className="tool-control">Or paste content<textarea aria-label="Inspector content" maxLength={2000} rows={4} value={text} onChange={event => setText(event.target.value)} /></label>
       <button className="primary-button" disabled={!text.trim() || inspecting} onClick={() => { try { analyzeContent(text, props.dataset, props.template); setResult({ text, format: 'PASTED' }); setError(''); } catch (reason) { setError(reason instanceof Error ? reason.message : 'Invalid content.'); } }}>Analyze pasted content</button>
       <p>Pasted content has no known symbol format. Image decoding detects the format. URLs are displayed as text and are never opened.</p>

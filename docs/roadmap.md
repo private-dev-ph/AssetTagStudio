@@ -1,6 +1,6 @@
 # Product roadmap after the MVP
 
-These are the twelve later-feature items explicitly deferred in section 6 of the original end-to-end plan. They are proposed work, not a schedule or implemented capability.
+These are the twelve later-feature items deferred in section 6 of the original end-to-end plan. The separate local `feature-expansion` branch now implements the items marked below, plus Data Health, serial tools, payload tooling, cable/location labels, code inspection and exact print manifests. The live deployment remains on main. See [the expansion checklist](implementation/expansion-progress.md) for verification status.
 
 | Feature | What remains |
 |---|---|
@@ -8,15 +8,15 @@ These are the twelve later-feature items explicitly deferred in section 6 of the
 | EAN / UPC | Retail code formats, with digit-length and checksum validation. Code128 is already implemented. |
 | Logo placement | Place an optional local logo while preserving code readability and print dimensions. |
 | Image fields | Associate/render images from input fields with explicit source/privacy and resource rules. |
-| Saved local templates | A named template library and switching/deletion. The current app remembers the last template/preferences; it does not provide a library. |
-| JSON template import/export | Portable versioned template files with validation and a compatibility/migration policy. |
+| Saved local templates | Implemented in the local expansion: named IndexedDB CRUD, six presets and explicit field mapping. |
+| JSON template import/export | Implemented in the local expansion: strict versioned settings-only documents and unknown-version/property rejection. |
 | Bulk formatting rules | Apply field transformations/prefixes/conditional formatting across records, without becoming a spreadsheet editor. |
-| Sequential asset-ID generation | Create configurable, padded ID sequences and avoid collisions with imported values. |
-| Printer profiles | Reusable stock/printer dimensions and calibration offsets. Page/label presets already exist. |
+| Sequential asset-ID generation | Implemented in the local expansion: selected/blank-only padded sequences, tokens, collision checks and undo. |
+| Printer profiles | Calibration profiles implemented in the local expansion; stock/page/label settings are portable with templates. |
 | PWA / offline installation | Installable app and explicit offline asset/update behavior. Client-only processing currently works after loading, but offline installation/reload is not guaranteed. |
 | Direct browser printing | Print workflow alongside authoritative PDF export, with browser scaling and layout verification. |
-| FieldLens QR presets | A validated preset/integration contract for FieldLens asset links. Generic payload templates already allow strings such as fieldlens://asset/{asset_id}; no dedicated preset or end-to-end FieldLens integration exists. |
+| FieldLens QR presets | Implemented in the local expansion: validated raw asset URIs and matching PDF/CSV export; actual receiver CSV ingestion remains unverified. |
 
-A practical sequence is saved templates + JSON portability, then printer profiles/calibration and sequential IDs. Additional code formats and logos/images should follow real user needs. PWA updates and FieldLens integration need their own compatibility/privacy decisions. This ordering is a suggestion, not a change to the original scope.
+Next candidates are additional code formats, local logos/images and broader formatting rules, guided by real workflows. PWA updates and direct printing need explicit compatibility and privacy decisions. FieldLens CSV ingestion requires a verified receiver-side importer. These are follow-up suggestions outside the twelve-feature expansion.
 
 Separate reliability follow-up includes physical printing/scanning, Firefox/Safari coverage, benchmarking large unique-label PDFs, workbook fuzz testing, bundle splitting and updating the development linter. Those tasks improve the existing MVP rather than add the roadmap features above. The owner selected Apache-2.0 for the project after the initial release.

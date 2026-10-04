@@ -1,6 +1,7 @@
 import JsBarcode from 'jsbarcode';
 import QRCode from 'qrcode';
 import type { AssetRecord, LabelField, LabelTemplate } from '../../types';
+import { resolveCodePayload } from '../../core/payload';
 
 const MAX_LABEL_MM = 200;
 const MAX_FONT_PT = 48;
@@ -24,6 +25,9 @@ export function validateTemplate(template: LabelTemplate): void {
     throw new Error('Label dimensions are too large to render safely. Reduce the label size.');
   }
   if (!['left', 'center', 'right'].includes(template.alignment)) throw new Error('Choose left, center, or right alignment.');
+  if (template.mode !== undefined && !['asset', 'cable', 'location', 'code'].includes(template.mode)) throw new Error('Choose a supported label mode.');
+  if (template.textLayout !== undefined && !['standard', 'mirrored'].includes(template.textLayout)) throw new Error('Choose a supported text layout.');
+  if (template.textLayout === 'mirrored' && template.widthMm / 2 < 10) throw new Error('Mirrored labels need a physical width of at least 20 mm so each side can render safely.');
   if (typeof template.border !== 'boolean') throw new Error('Label border setting must be on or off.');
   if (!Array.isArray(template.fields) || template.fields.length > MAX_FIELDS) {
     throw new Error(`A label can contain at most ${MAX_FIELDS} text fields.`);
@@ -37,8 +41,10 @@ export function validateTemplate(template: LabelTemplate): void {
     if (typeof field.bold !== 'boolean') throw new Error(`Text field ${index + 1} bold setting must be on or off.`);
   }
   const code = template.code;
-  if (!code || !['qr', 'code128'].includes(code.type)) throw new Error('Choose QR or Code 128 as the label code.');
-  if (typeof code.field !== 'string' || !code.field.trim() || code.field.length > 200) throw new Error('Choose a code column with a name up to 200 characters.');
+  if (!code || !['qr', 'code128', 'none'].includes(code.type)) throw new Error('Choose QR, Code 128, or no code.');
+  if (code.type === 'none' && template.fields.length === 0) throw new Error('Add at least one text field to a text-only label.');
+  if (code.payloadMode !== undefined && !['text', 'url', 'fieldlens', 'location'].includes(code.payloadMode)) throw new Error('Choose a supported payload mode.');
+  if (code.type !== 'none' && (typeof code.field !== 'string' || !code.field.trim() || code.field.length > 200)) throw new Error('Choose a code column with a name up to 200 characters.');
   if (typeof code.payload !== 'string' || code.payload.length > 2_000) {
     throw new Error('Code payload must be text with no more than 2,000 characters.');
   }
@@ -50,8 +56,8 @@ export function validateTemplate(template: LabelTemplate): void {
     throw new Error('Payload placeholders need a column name, such as {Asset ID}.');
   }
   if (code.type === 'qr') {
-    finiteInRange(code.sizeMm, 'QR size', 8, Math.min(template.widthMm, template.heightMm));
-  } else {
+    finiteInRange(code.sizeMm, 'QR size', 8, Math.min(template.textLayout === 'mirrored' ? template.widthMm / 2 : template.widthMm, template.heightMm));
+  } else if (code.type === 'code128') {
     finiteInRange(code.barcodeHeightMm, 'Barcode height', 5, Math.min(40, template.heightMm));
     const scale = code.barcodeScale ?? 1;
     if (!Number.isFinite(scale) || scale < 0.8 || scale > 3) throw new Error('Barcode scale must be between 0.8 and 3.');
@@ -69,25 +75,7 @@ function readStringValue(record: AssetRecord, key: string): string | undefined {
 
 export function interpolatePayload(record: AssetRecord, template: LabelTemplate): string {
   validateTemplate(template);
-  if (!template.code.payload) {
-    const value = readStringValue(record, template.code.field);
-    if (!value?.trim()) throw new Error(`Record “${record.id}” has no value in “${template.code.field}”. Fill that cell or choose another code column.`);
-    if (value.length > 2_000) throw new Error(`Record “${record.id}” produces a code value over 2,000 characters. Shorten the value or payload.`);
-    return value;
-  }
-  let unknown: string | undefined;
-  let missingValue: string | undefined;
-  const result = template.code.payload.replace(PLACEHOLDER, (_match, key: string) => {
-    const value = readStringValue(record, key);
-    if (!Object.hasOwn(record.values, key)) unknown = key;
-    else if (!value?.trim()) missingValue = key;
-    return value ?? '';
-  });
-  if (unknown) throw new Error(`Payload placeholder “{${unknown}}” is not a column in the records. Fix the template placeholder.`);
-  if (missingValue) throw new Error(`Record “${record.id}” has no value in “${missingValue}”. Fill that cell or change the payload.`);
-  if (!result.trim()) throw new Error(`Record “${record.id}” produces an empty code value. Add a value or change the payload.`);
-  if (result.length > 2_000) throw new Error(`Record “${record.id}” produces a code value over 2,000 characters. Shorten the value or payload.`);
-  return result;
+  return resolveCodePayload(record, template.code);
 }
 
 export function wrapText(text: string, maxWidth: number, measure: (text: string) => number): string[] {
@@ -136,12 +124,48 @@ function drawWrappedField(context: CanvasRenderingContext2D, field: LabelField, 
   return y;
 }
 
+function drawFields(context: CanvasRenderingContext2D, record: AssetRecord, template: LabelTemplate, x: number, y: number, width: number, bottom: number): void {
+  let nextY = y;
+  for (const field of template.fields) {
+    const value = readStringValue(record, field.source) ?? '';
+    if (value.length > 2_000 || field.label.length > 200) throw new Error(`Text for “${field.source}” is too long to render safely. Shorten the cell or label.`);
+    nextY = drawWrappedField(context, field, value, x, nextY, width, bottom, template.alignment);
+  }
+}
+
 function pngDataUrl(canvas: HTMLCanvasElement): string {
   return canvas.toDataURL('image/png');
 }
 
+async function renderMirroredLabel(record: AssetRecord, template: LabelTemplate): Promise<string> {
+  const halfWidthMm = template.widthMm / 2;
+  const halfTemplate = { ...template, widthMm: halfWidthMm, textLayout: 'standard' as const };
+  const sideDataUrl = await renderLabel(record, halfTemplate);
+  const sideImage = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error('Could not prepare the mirrored label panels.'));
+    image.src = sideDataUrl;
+  });
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(template.widthMm * PIXELS_PER_MM);
+  canvas.height = Math.round(template.heightMm * PIXELS_PER_MM);
+  const context = canvasContext(canvas);
+  context.fillStyle = '#fff';
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  const panelWidth = Math.floor(canvas.width / 2);
+  context.drawImage(sideImage, 0, 0, sideImage.width, sideImage.height, 0, 0, panelWidth, canvas.height);
+  context.save();
+  context.translate(canvas.width, canvas.height);
+  context.rotate(Math.PI);
+  context.drawImage(sideImage, 0, 0, sideImage.width, sideImage.height, 0, 0, panelWidth, canvas.height);
+  context.restore();
+  return pngDataUrl(canvas);
+}
+
 export async function renderLabel(record: AssetRecord, template: LabelTemplate): Promise<string> {
   validateTemplate(template);
+  if (template.textLayout === 'mirrored') return renderMirroredLabel(record, template);
   let payload: string;
   try {
     payload = interpolatePayload(record, template);
@@ -195,13 +219,8 @@ export async function renderLabel(record: AssetRecord, template: LabelTemplate):
     const textX = x + side + pad;
     const textWidth = innerRight - textX;
     if (template.fields.length && textWidth <= 0) throw new Error('There is no room for text beside the QR code. Reduce QR size or padding.');
-    let textY = pad;
-    for (const field of template.fields) {
-      const fieldValue = readStringValue(record, field.source) ?? '';
-      if (fieldValue.length > 2_000 || field.label.length > 200) throw new Error(`Text for “${field.source}” is too long to render safely. Shorten the cell or label.`);
-      textY = drawWrappedField(context, field, fieldValue, textX, textY, textWidth, innerBottom, template.alignment);
-    }
-  } else {
+    drawFields(context, record, template, textX, pad, textWidth, innerBottom);
+  } else if (template.code.type === 'code128') {
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     try {
       JsBarcode(svg, payload, {
@@ -246,12 +265,10 @@ export async function renderLabel(record: AssetRecord, template: LabelTemplate):
       context.fillText(payload, canvas.width / 2, textY + PIXELS_PER_MM * 3.5, barcodeWidth);
       textY += PIXELS_PER_MM * 4.5;
     }
-    for (const field of template.fields) {
-      const fieldValue = readStringValue(record, field.source) ?? '';
-      if (fieldValue.length > 2_000 || field.label.length > 200) throw new Error(`Text for “${field.source}” is too long to render safely. Shorten the cell or label.`);
-      textY = drawWrappedField(context, field, fieldValue, pad, textY, barcodeWidth, innerBottom, template.alignment);
-    }
+    drawFields(context, record, template, pad, textY, barcodeWidth, innerBottom);
     if (textY > innerBottom + 0.5) throw new Error('Barcode and text do not fit. Reduce the barcode height or font sizes, or increase label height.');
+  } else {
+    drawFields(context, record, template, pad, pad, innerRight - pad, innerBottom);
   }
   return pngDataUrl(canvas);
 }

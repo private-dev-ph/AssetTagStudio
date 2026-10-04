@@ -1,0 +1,5 @@
+asset_id,site,building,floor,room,rack,shelf,bin
+LOC-001,Warehouse A,East,1,Stores,Rack A,03,07
+LOC-002,Warehouse A,East,1,Stores,Rack A,03,08
+LOC-003,Warehouse A,West,2,Parts,Rack B,01,02
+LOC-004,Office A,Main,3,IT,Rack C,02,01
