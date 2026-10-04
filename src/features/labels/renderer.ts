@@ -91,6 +91,7 @@ export function interpolatePayload(record: AssetRecord, template: LabelTemplate)
 }
 
 export function wrapText(text: string, maxWidth: number, measure: (text: string) => number): string[] {
+  if (!Number.isFinite(maxWidth) || maxWidth <= 0) throw new Error('Text area must have a positive width. Increase label width or reduce code size and padding.');
   const lines: string[] = [];
   for (const paragraph of text.split(/\r?\n/)) {
     if (paragraph === '') { lines.push(''); continue; }
@@ -101,6 +102,7 @@ export function wrapText(text: string, maxWidth: number, measure: (text: string)
       if (line) lines.push(line);
       line = '';
       for (const char of Array.from(word)) {
+        if (measure(char) > maxWidth) throw new Error('Text cannot fit at this font size. Reduce the font size or increase the label area.');
         if (line && measure(line + char) > maxWidth) { lines.push(line); line = ''; }
         line += char;
       }
@@ -128,7 +130,7 @@ function drawWrappedField(context: CanvasRenderingContext2D, field: LabelField, 
   context.textAlign = alignment;
   const drawX = alignment === 'left' ? x : alignment === 'center' ? x + width / 2 : x + width;
   for (const line of lines) {
-    context.fillText(line, drawX, y + fontPx, width);
+    context.fillText(line, drawX, y + fontPx);
     y += lineHeight;
   }
   return y;
@@ -209,6 +211,11 @@ export async function renderLabel(record: AssetRecord, template: LabelTemplate):
     } catch {
       throw new Error(`Record “${record.id}” is not a valid Code 128 value. Use printable ASCII characters and check the value.`);
     }
+    const barcodeWidth = innerRight - pad;
+    const svgWidth = Number.parseFloat(svg.getAttribute('width') ?? '');
+    if (!Number.isFinite(svgWidth) || svgWidth <= 0 || svgWidth > barcodeWidth) {
+      throw new Error(`Barcode for record “${record.id}” is too wide for this label. Shorten the value or increase label width.`);
+    }
     const rawSvg = new XMLSerializer().serializeToString(svg);
     const image = await new Promise<HTMLImageElement>((resolve, reject) => {
       const img = new Image();
@@ -216,7 +223,6 @@ export async function renderLabel(record: AssetRecord, template: LabelTemplate):
       img.onerror = () => reject(new Error('Could not rasterize the barcode. Check the value and try again.'));
       img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(rawSvg)}`;
     });
-    const barcodeWidth = innerRight - pad;
     if (image.width > barcodeWidth) {
       throw new Error(`Barcode for record “${record.id}” is too wide for this label. Shorten the value or increase label width.`);
     }

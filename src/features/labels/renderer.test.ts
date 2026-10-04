@@ -49,4 +49,10 @@ describe('label template and payload', () => {
     expect(wrapped).toEqual(['alpha', 'beta', 'ABCDE']);
     expect(wrapText('ABCDEFGHI', 4, (value) => value.length)).toEqual(['ABCD', 'EFGH', 'I']);
   });
+
+  it('rejects text areas narrower than a glyph without distorting text', () => {
+    expect(() => wrapText('W', 3, () => 4)).toThrow(/Reduce the font size/);
+    expect(() => wrapText('a', 0, () => 1)).toThrow(/positive width/);
+    expect(() => wrapText('a', Number.NaN, () => 1)).toThrow(/positive width/);
+  });
 });
