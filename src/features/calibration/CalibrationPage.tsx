@@ -12,6 +12,7 @@ export function CalibrationPage({ page, onPageChange, busy }: StudioPageProps) {
   const [error, setError] = useState('');
   const [working, setWorking] = useState(false);
   const [loadingProfiles, setLoadingProfiles] = useState(true);
+  const [profileLoadFailed, setProfileLoadFailed] = useState(false);
   const pageRef = useRef(page); pageRef.current = page;
   const pageChangeRef = useRef(onPageChange); pageChangeRef.current = onPageChange;
   const disabled = busy || working || loadingProfiles;
@@ -25,7 +26,7 @@ export function CalibrationPage({ page, onPageChange, busy }: StudioPageProps) {
       setActiveId(active?.id ?? '');
       if (active) pageChangeRef.current({ ...pageRef.current, offsetXMm: active.offsetXMm, offsetYMm: active.offsetYMm });
       else setActivePrinterId('');
-    }).catch(cause => { if (current) setError(cause instanceof Error ? cause.message : 'Could not load printer profiles.'); }).finally(() => { if (current) setLoadingProfiles(false); });
+    }).catch(cause => { if (current) { setError(cause instanceof Error ? cause.message : 'Could not load printer profiles.'); setProfileLoadFailed(true); } }).finally(() => { if (current) setLoadingProfiles(false); });
     return () => { current = false; };
   }, []);
   const selectProfile = (id: string) => {
@@ -84,9 +85,9 @@ export function CalibrationPage({ page, onPageChange, busy }: StudioPageProps) {
     finally { setWorking(false); }
   };
   const recoverProfiles = async () => {
-    if (!window.confirm('Clear all saved printer profiles to recover the corrupted printer library?')) return;
+    if (!window.confirm('Clear all saved printer profiles and reset the printer library?')) return;
     setWorking(true); setError('');
-    try { await clearPrinterProfiles(); setProfiles([]); setActiveId(''); setActivePrinterId(''); onPageChange({ ...page, offsetXMm: 0, offsetYMm: 0 }); }
+    try { await clearPrinterProfiles(); setProfiles([]); setActiveId(''); setActivePrinterId(''); setProfileLoadFailed(false); onPageChange({ ...page, offsetXMm: 0, offsetYMm: 0 }); }
     catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not clear the printer profile library.'); }
     finally { setWorking(false); }
   };
@@ -101,6 +102,6 @@ export function CalibrationPage({ page, onPageChange, busy }: StudioPageProps) {
         {active && <p>{active.offsetXMm} mm X · {active.offsetYMm} mm Y</p>}<div className="tool-row"><label className="tool-control">New profile name<input value={name} maxLength={100} disabled={disabled} onChange={e => setName(e.target.value)}/></label><button className="secondary-button" disabled={disabled || (!active && !name.trim())} onClick={saveCurrentProfile}>{active ? 'Update active profile' : 'Save new profile'}</button></div>
         <div className="tool-row"><button className="secondary-button" disabled={disabled || !active} onClick={() => active && downloadFile(exportPrinterProfile(active), 'application/json', `${active.name.replace(/[^a-z0-9_-]+/gi, '-')}.printer.json`)}>Export profile</button><label className="secondary-button">Import profile<input type="file" accept="application/json,.json" disabled={disabled} hidden onChange={e => { const input = e.currentTarget; const file = input.files?.[0]; input.value = ''; void importFile(file); }}/></label><button className="secondary-button" disabled={disabled || !active} onClick={() => void remove()}>Delete profile</button></div>
       </section>
-    </div>{error && <p role="alert" className="tool-error">{error}</p>}{/corrupt/i.test(error) && <button className="secondary-button" disabled={disabled} onClick={() => void recoverProfiles()}>Clear printer library and recover</button>}
+    </div>{error && <p role="alert" className="tool-error">{error}</p>}{(profileLoadFailed || /corrupt/i.test(error)) && <button className="secondary-button" disabled={disabled} onClick={() => void recoverProfiles()}>Clear printer library and recover</button>}
   </ToolFrame>;
 }

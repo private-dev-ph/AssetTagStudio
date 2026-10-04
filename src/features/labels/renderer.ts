@@ -57,7 +57,7 @@ export function validateTemplate(template: LabelTemplate): void {
   }
   if (code.type === 'qr') {
     finiteInRange(code.sizeMm, 'QR size', 8, Math.min(template.textLayout === 'mirrored' ? template.widthMm / 2 : template.widthMm, template.heightMm));
-  } else {
+  } else if (code.type === 'code128') {
     finiteInRange(code.barcodeHeightMm, 'Barcode height', 5, Math.min(40, template.heightMm));
     const scale = code.barcodeScale ?? 1;
     if (!Number.isFinite(scale) || scale < 0.8 || scale > 3) throw new Error('Barcode scale must be between 0.8 and 3.');

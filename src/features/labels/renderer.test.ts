@@ -26,6 +26,16 @@ describe('label template and payload', () => {
     expect(() => validateTemplate({ ...textOnly, fields: [] })).toThrow(/text field/);
   });
 
+  it('accepts a text-only cable preset when unused barcode settings are zeroed', () => {
+    const cablePreset: LabelTemplate = {
+      ...template,
+      mode: 'cable', textLayout: 'mirrored', widthMm: 70, heightMm: 18,
+      fields: [{ source: 'Source endpoint', label: 'From', fontSize: 8, bold: true }],
+      code: { ...template.code, type: 'none', field: '', barcodeHeightMm: 0, barcodeScale: 0 },
+    };
+    expect(() => validateTemplate(cablePreset)).not.toThrow();
+  });
+
   it('renders mirrored labels into disjoint half-width panels, including optional codes', async () => {
     const fillText = vi.fn();
     const drawImage = vi.fn();
