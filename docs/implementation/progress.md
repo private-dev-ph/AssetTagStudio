@@ -18,3 +18,5 @@ Active, resumed2026-10-04. main27d0582 remains unchanged. No push/deployment yet
 Handoff records actual command failures/resolutions, exact branch state, risks and next action. Dependency merge conflicts in tracking/config were resolved deliberately; production server and security headers retained.
 
 Verification milestone ready:64unit +15productionbrowser tests pass, types/lint/build pass atbe553c3. Includes browser XLS positive/negative, QR decode/privacy/XSS/headers, serial Code128 multipagePDF, cancellation,20k repeated-label834pages, controls/persistence/mobile.
+
+Workspace visual follow-up410da15: Complete; checkbox/caption/mobile CSS and bounded-toggle regression, types/lint/build and1 built-app browser test passed. Merged inebd4333. Refreshed media and final15-browser run pending.
