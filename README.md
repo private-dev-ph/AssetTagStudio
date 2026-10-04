@@ -27,6 +27,27 @@ Equipment lists already live in spreadsheets. Producing consistent labels should
 - Paginated print preview, multi-page PDF, progress and cancellation
 - Sample data, downloadable CSV template, light/dark theme and keyboard-friendly controls
 
+## Local feature expansion
+
+The `feature-expansion` branch adds the twelve tools below. Verification runs locally; the live links above continue to serve `main`. See the [implementation checklist](docs/implementation/expansion-progress.md) and [resume handoff](docs/implementation/expansion-handoff.md) for current evidence and outstanding checks.
+
+| Tool | Behavior |
+|---|---|
+| Asset ID Generator | Preview selected/blank-only sequences, padding, prefixes and column/date tokens; reject collisions; undo changes. |
+| Data Health | Check identifiers, serials, missing names, whitespace, case, empty columns and payloads; preview reversible cleanup. |
+| Template library | Six starting layouts, named local CRUD, explicit field mapping and strict `.assettag.json` import/export. |
+| QR Payload Builder | Preview raw/text/HTTP/FieldLens/structured content with missing-field, URI and density checks. |
+| Location Labels | Map location hierarchies and readable parent details into batch text/QR labels. |
+| Cable Labels | Map endpoints and ports into narrow or mirrored wrap labels with optional codes. |
+| Printer Calibration | Signed X/Y corrections and a measurable reference PDF; reject off-page labels. |
+| Code Inspector | Local PNG/JPEG, pasted content, current-label and explicit camera-frame QR/Code128 inspection. |
+| Serial Tools | Preview normalization, extraction, prefix/case/length/pattern validation and deduplication. |
+| Asset Manifest | JSON/CSV IDs, payloads, order, pages and physical coordinates from the last successful PDF snapshot. |
+| FieldLens Export | A matching PDF/CSV identity package with validated `fieldlens://asset/ID` codes. CSV is an exchange contract; a receiver importer is not verified. |
+| Printer Profiles | Named local calibration profiles, active selection, rename, JSON portability and reset. |
+
+Create, Data, Design and Tools navigation shares one in-memory dataset. Settings libraries use IndexedDB; imported rows and undo history remain in memory. Changes require explicit Apply. Separate Apply and Export actions preserve the chosen print settings.
+
 ## Demo workflow
 
 Choose **Try sample data**, select a unique identifier, edit the visible fields, choose a label size and paper, then download the PDF. Print at **100% / actual size**, with fit-to-page disabled. The downloadable CSV template is available at the top of the workspace.
@@ -39,7 +60,7 @@ The screenshots, 9.6-second GIF and 11-page A4 PDF use 245 synthetic assets capt
 
 ## Privacy
 
-Records stay in browser memory; only preferences persist. No analytics, remote processing or spreadsheet-content requests. Reload clears records. See [privacy](docs/privacy.md).
+Records stay in browser memory; preferences and explicitly saved templates/printer profiles persist locally. No analytics, remote processing or spreadsheet-content requests. Reload clears records. Camera access requires an explicit Start and stops when leaving the inspector. See [privacy](docs/privacy.md).
 
 ## Architecture
 
@@ -114,9 +135,9 @@ Imported files and rendered codes have documented resource limits. Compressed Ex
 
 ## Future work
 
-Saved templates, logo/image fields, additional symbologies, printer profiles, offline installation and FieldLens presets are intentionally outside the MVP.
+Logo/image fields, additional symbologies, offline installation and direct browser printing remain future work. Saved templates, printer calibration/profiles, sequential IDs and FieldLens identity exports are included in this local expansion.
 
-The [post-MVP roadmap](docs/roadmap.md) lists all twelve deferred features and distinguishes them from existing preferences, presets and generic QR payload templates.
+The [post-MVP roadmap](docs/roadmap.md) distinguishes this expansion from the remaining deferred work.
 
 ## License
 

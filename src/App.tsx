@@ -312,7 +312,7 @@ function App() {
 
     <main className="workspace" id="top">
       <nav className="studio-navigation" aria-label="Studio tools">{NAVIGATION.map(group => <div className="nav-group" key={group.group}><span>{group.group}</span><div>{group.items.map(item => <a key={item.view} href={`#/${item.view}`} aria-current={view === item.view ? 'page' : undefined}>{item.title}</a>)}</div></div>)}</nav>
-      {dataset && <div className="workspace-status"><span>{dataset.records.length.toLocaleString()} rows · {selected.size.toLocaleString()} selected · {templateName}</span><button className="secondary-button small-button" onClick={undo} disabled={!canUndo || studioProps.busy}>Undo {history.current.description}</button></div>}
+      {dataset && <div className="workspace-status"><span>{dataset.records.length.toLocaleString()} rows · selection {selected.size.toLocaleString()} · {templateName}</span><button className="secondary-button small-button" onClick={undo} disabled={!canUndo || studioProps.busy}>Undo {history.current.description}</button></div>}
       {view !== 'asset-labels' && error && <p role="alert" className="alert error-alert">{error}</p>}
       {progress !== null && view !== 'asset-labels' && <div className="alert info-alert" role="status">Preparing PDF {progress}% <button className="secondary-button" onClick={() => exportController?.abort()}>Cancel export</button></div>}
       {exportError && view !== 'asset-labels' && <p role="alert" className="alert error-alert">{exportError}</p>}
@@ -407,4 +407,3 @@ function NumberControl({ label, value, min, max, step, unit, onChange }: { label
 }
 
 export default App;
-
