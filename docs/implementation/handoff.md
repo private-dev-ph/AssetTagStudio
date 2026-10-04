@@ -5,7 +5,7 @@
 - Starting main, current main and origin/main: 27d0582aae742990d2c25c0ef752896ac420becd. No implementation was committed to main.
 - Current branch: web-deployment. Integrated implementation checkpoint: 95cac68. The exact current branch/documentation SHA is obtained with `git rev-parse HEAD`; integration SHA with `git rev-parse web-deployment`.
 - All nine feature branches are ancestors of web-deployment. No required code is stranded on an outstanding branch.
-- No remote push or live deployment yet. Final integrated verification is running.
+- No remote push or live deployment yet. Final integrated verification passed: 64 unit and 15 production Edge browser tests, typecheck, lint, production build and audit0.
 - No current merge conflicts or uncommitted application work. Only this tracking update is uncommitted until its checkpoint commit.
 
 ## Branches and completed features
@@ -32,7 +32,7 @@ Static React/TypeScript/Vite, no backend/accounts/telemetry/uploads/fonts/CDN ru
 - Root clean npm ci, typecheck, lint and 64/64 unit tests passed before CSS/portfolio integration. Audit: 0 known vulnerabilities.
 - CSS polish: typecheck/lint/build and 1/1 built-app browser regression passed before merge; media visually reviewed after merge.
 - Portfolio: five actual screenshots, 9.6s GIF, 11-page A4 PDF for 245 synthetic assets; capture script syntax/lint, JSON/references, visual inspection and Poppler PDF checks passed. No JavaScript/forms in sample PDF. Forty production-package licenses included.
-- Final full suite on 95cac68 is running; add exact result before push.
+- Final full suite on 95cac68 passed 64/64 unit and 15/15 production Edge browser tests, typecheck, lint, build and audit0. Documentation updates do not change the tested application.
 
 Commands: npm ci; npm run typecheck; npm run lint; npm test; npm run build; npm audit --audit-level=moderate; PowerShell `$env:PLAYWRIGHT_CHANNEL='msedge'; npm run test:e2e`. CI installs Chromium on Ubuntu. Production test server applies public/_headers.
 
@@ -46,7 +46,7 @@ Malicious DEFLATE/BIFF can consume resources before timeout. Large unique-label 
 ## Hosting draft and next action
 Cloudflare signed-in Pages GitHub setup is unsaved. Existing integration authorizes private-dev-ph/AssetTagStudio. Draft project tagstudio, npm run build, dist, NODE_VERSION24. Production branch is still main until web-deployment is pushed: MUST change it to web-deployment before Save and Deploy. Requested hostname is tagstudio.zachcodes.dev; no domain has been added. No analytics or runtime secrets needed.
 
-1. Finish final integrated tests, update this checkpoint, verify clean Git/main unchanged/all branches contained, and push only web-deployment.
+1. Final tests complete; push only web-deployment, verify GitHub CI and deploy the correct branch.
 2. Inspect GitHub CI; select web-deployment in Cloudflare draft, deploy, add custom domain, verify HTTPS, headers and live CSV/Excel/QR/Code128/PDF/privacy paths.
 3. Record verified URL in README/showcase/deployment docs, final security/progress/handoff results, commit and push documentation; verify final deployment/CI and exact final SHA.
 4. Provide the requested structured report and evidence-based confidence rating.

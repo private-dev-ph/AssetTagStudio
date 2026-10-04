@@ -1,26 +1,19 @@
 # Implementation progress
 
-Active, resumed2026-10-04. main27d0582 remains unchanged. No push/deployment yet.
+All requested MVP features are integrated into web-deployment. main remains 27d0582aae742990d2c25c0ef752896ac420becd. Implementation checkpoint: 95cac68; documentation checkpoint: use git rev-parse HEAD. Live hosting is the active remaining milestone.
 
-| Milestone | Branch | Status | Related files | Latest commit / tests | Issues / dependencies | Merge |
+| Milestone / feature | Feature branch | Status | Related files | Latest relevant commit / tests | Unresolved issues / dependencies | Merge |
 |---|---|---|---|---|---|---|
-| Foundation | application-foundation | Complete | config/types/docs | d494d36;types/lint/build | Patched Vitest4.1.11 | 378cdfd |
-| Import foundation | spreadsheet-import | Complete | import/docs | 275845a;18unit/types/lint/build | Hardening below | 8c1722a |
-| Label/layout/PDF | label-print-engine | Complete | renderer/layout/export | b2123cf;21focused,39integrated/type/lint/build | Raster text;physical printer untested | 3bf791f |
-| Static hosting/CI | static-deployment | Complete | headers/CI/deploymentdocs | 1f9b927;types/lint/build/audit0 | Live hosting pending | 5bae5ed |
-| PDF memory | reduce-pdf-memory | Complete | export/tests/PDFdocs | 0f8c35e;40unit/types/lint/build;5postmergePDF | Compressed final document retained | 7a06fe4 |
-| Workspace/editor | label-workspace | Complete | App/styles/preferences/examples/E2E | a0ee1bd;root production4workspace+6security/control+4failure pass;46postmergeunit | State fixes verified;reviewedDiff | b203510 |
-| Workbook/worker bounds | bound-workbook-imports | Complete | CFB/ZIP/client/parser/tests/docs | 931f5b0;35independentunit/type/lint/build;63postmergeunit;source review no blockers | Residual malformed parserCPU;strict formats documented | 0ff9609 |
-| Integrated verification | verification-hardening | Complete | renderer/tests/productionserver | b7f584e;64unit/15productionbrowser/types/lint/build | Final clean-install verification pending | 71f5616 |
-| Portfolio/media/notices | portfolio-documentation | In progress | README/ADRs/architecture/notices/showcase/media | fb3fcb4;JSON/link/diffchecks | Actual screenshots/GIF/PDF captured; visual polish/review pending | Pending |
-| Live custom hostname | web-deployment | Not started | Cloudflare Pages | Unsavedtagstudio draft | Finishfinalchecks,pushbranch,selectproductionbranch,adddomain | Not deployed |
+| Foundation | application-foundation | Complete | Config/types/CI | d494d36; types/lint/build | No existing data migration | 378cdfd |
+| Static hosting | static-deployment | Complete | Headers/CI/deployment docs | 1f9b927; headers tested | Live deployment below | 5bae5ed |
+| Spreadsheet import | spreadsheet-import | Complete | Import/normalize/worker | 275845a; initial18 tests | Hardening below | 8c1722a |
+| Label/layout/PDF | label-print-engine | Complete | Renderer/layout/export | b2123cf; initial21 tests | Physical print/scanner untested | 3bf791f |
+| PDF memory | reduce-pdf-memory | Complete | PDF/export tests | 0f8c35e; focused5 tests | Compressed final output retained | 7a06fe4 |
+| Workspace/editor/polish | label-workspace | Complete | App/styles/preferences/examples/E2E | 410da15; focused1 built-browser polish check; full suite below | Mobile/checkbox visually reviewed | b203510 / ebd4333 |
+| Workbook/worker bounds | bound-workbook-imports | Complete | ZIP/CFB/parser/client/tests | 931f5b0;35 independent tests and source review | Documented residual parser resource risk | 0ff9609 |
+| Integrated verification | verification-hardening | Complete | Tests/renderer/static test server | b7f584e; final64/64 unit and15/15 production browser; types/lint/build/audit0 | Edge locally; Chromium in CI | 71f5616 |
+| Portfolio/docs/licenses | portfolio-documentation | Complete | README/5ADRs/media/scripts/notices/showcase | 49edd99; lint/syntax/JSON/visual/Poppler review | Live URL pending; no project license chosen | 95cac68 |
+| Final security review | web-deployment | Complete | security-review.md/integrated system | da1ef10; independent source+portfolio review, audit0, secret scans0 | Accepted local resource limits and dev linter maintenance | Integrated |
+| Live custom hostname | web-deployment | In progress | Cloudflare/README/showcase/deployment docs | Local release fully verified | Push branch, provider build/CI, add domain, verify live | Pending |
 
-Handoff records actual command failures/resolutions, exact branch state, risks and next action. Dependency merge conflicts in tracking/config were resolved deliberately; production server and security headers retained.
-
-Verification milestone ready:64unit +15productionbrowser tests pass, types/lint/build pass atbe553c3. Includes browser XLS positive/negative, QR decode/privacy/XSS/headers, serial Code128 multipagePDF, cancellation,20k repeated-label834pages, controls/persistence/mobile.
-
-Workspace visual follow-up410da15: Complete; checkbox/caption/mobile CSS and bounded-toggle regression, types/lint/build and1 built-app browser test passed. Merged inebd4333. Refreshed media and final15-browser run pending.
-
-Portfolio49edd99: Ready to merge; README/5ADRs/40-package notices,5screenshots/9.6s GIF/11-page A4 PDF/capture scripts. Lint,syntax,JSON/link checks and visual/PDF inspection passed. Independent supplemental security review found no sensitive artifact/script concern. Live URL remains pending.
-
-Portfolio49edd99 merged in95cac68: Complete; documentation/media/licenses reviewed. All nine feature branch tips verified as ancestors of web-deployment. Final integrated suite running; deployment pending.
+Final clean dependency install completed. Final applicable commands: npm run typecheck, npm run lint, npm test (64 tests,8 files), npm run test:e2e with PLAYWRIGHT_CHANNEL=msedge (15 tests,55.8s; production build included), npm audit --audit-level=moderate (0 vulnerabilities). All nine feature tips are ancestors of integration. No source merge conflicts or outstanding implementation branch. Handoff contains setup failures, their resolutions and exact next action.
