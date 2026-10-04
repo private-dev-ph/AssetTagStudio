@@ -42,3 +42,19 @@ test('malformed saved preferences fall back and an invalid layout can be repaire
   await page.getByLabel('Paper size', { exact: true }).selectOption('A4');
   await expect(page.getByRole('button', { name: /Download PDF/ })).toBeEnabled();
 });
+
+test('the 20000-row boundary exports a complete PDF with repeated labels', async ({ page }) => {
+  test.setTimeout(120_000);
+  const { PDFDocument } = await import('pdf-lib');
+  const { readFile } = await import('node:fs/promises');
+  await page.goto('/');
+  const rows = ['asset_id,name', ...Array.from({ length: 20_000 }, () => 'SHARED-1,Shared tool')].join('\n');
+  await page.getByLabel('Choose a CSV or Excel file').setInputFiles({ name: 'boundary.csv', mimeType: 'text/csv', buffer: Buffer.from(rows) });
+  await expect(page.getByText('20000 rows · 2 columns')).toBeVisible();
+  await expect(page.locator('tbody tr')).toHaveCount(50);
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: /Download PDF/ }).click();
+  const download = await downloadPromise;
+  const pdf = await PDFDocument.load(await readFile((await download.path())!));
+  expect(pdf.getPageCount()).toBe(834);
+});
