@@ -3,7 +3,13 @@ import type { PageSettings } from '../../types';
 import { mmToInches } from '../layout/pageLayout';
 
 const PT_PER_MM = 72 / 25.4;
+export function validateCalibrationPage(page: PageSettings): void {
+  for (const [name, value] of [['Page width', page.widthMm], ['Page height', page.heightMm]] as const) {
+    if (!Number.isFinite(value) || value <= 0 || value > 2_000) throw new Error(`${name} must be finite and between 0 and 2,000 mm.`);
+  }
+}
 export async function generateCalibrationPdf(page: PageSettings): Promise<Uint8Array> {
+  validateCalibrationPage(page);
   const width = mmToInches(page.widthMm) * 72;
   const height = mmToInches(page.heightMm) * 72;
   const doc = await PDFDocument.create();
