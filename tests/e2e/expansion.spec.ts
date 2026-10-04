@@ -252,6 +252,45 @@ test('template library reports quota failures and leaves no partial save', async
   expect((await readLibrary(page)).templates).toHaveLength(0);
 });
 
+test('over-capacity printer storage offers a printers-only reset and preserves templates', async ({ page }) => {
+  await openView(page, 'calibration');
+  await expect(page.getByRole('heading', { name: 'Printer calibration' })).toBeVisible();
+  await expect(page.getByLabel('Active profile')).toBeEnabled();
+  const preservedTemplate = { id: 'preserved-template', name: 'Preserved template', json: '{}' };
+  await page.evaluate(async (templateEntry) => {
+    const database = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open('assettag-studio-library');
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    await new Promise<void>((resolve, reject) => {
+      const transaction = database.transaction(['templates', 'printers'], 'readwrite');
+      const templates = transaction.objectStore('templates');
+      const printers = transaction.objectStore('printers');
+      templates.clear();
+      printers.clear();
+      templates.put(templateEntry);
+      for (let index = 0; index < 101; index += 1) {
+        printers.put({ id: `over-limit-${index}`, name: `Profile ${index}`, json: '{}' });
+      }
+      transaction.oncomplete = () => { database.close(); resolve(); };
+      transaction.onerror = () => { database.close(); reject(transaction.error); };
+      transaction.onabort = () => { database.close(); reject(transaction.error); };
+    });
+  }, preservedTemplate);
+
+  await page.reload();
+  await expect(page.getByRole('alert')).toContainText(/more than 100 items/i);
+  const resetButton = page.getByRole('button', { name: 'Clear printer library and recover' });
+  await expect(resetButton).toBeVisible();
+  page.once('dialog', dialog => dialog.accept());
+  await resetButton.click();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  const recovered = await readLibrary(page);
+  expect(recovered.printers).toHaveLength(0);
+  expect(recovered.templates).toEqual([preservedTemplate]);
+});
+
 test('payload builder encodes URL columns and rejects missing references and dense QR payloads', async ({ page }) => {
   await loadCsv(page, 'url-values.csv', 'Asset ID,Name\nA/B 1,Router\n');
   await openView(page, 'payload-builder');

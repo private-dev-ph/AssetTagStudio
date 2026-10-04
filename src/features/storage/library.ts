@@ -79,7 +79,8 @@ function runTransaction<T>(store: LibraryStore, mode: IDBTransactionMode, operat
 }
 
 export async function listEntries(store: LibraryStore): Promise<LibraryEntry[]> {
-  const result = await runTransaction<unknown[]>(store, 'readonly', (objectStore) => objectStore.getAll(), 'Saved items could not be read from browser storage.');
+  // Fetch only enough rows to distinguish an allowed library from an over-capacity one.
+  const result = await runTransaction<unknown[]>(store, 'readonly', (objectStore) => objectStore.getAll(undefined, MAX_ENTRIES + 1), 'Saved items could not be read from browser storage.');
   if (!Array.isArray(result)) throw new Error('Saved library data is corrupted. Remove the damaged item and retry.');
   if (result.length > MAX_ENTRIES) throw new Error('Saved library contains more than 100 items. Delete extras before continuing.');
   return result.map((candidate) => {
