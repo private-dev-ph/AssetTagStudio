@@ -1,6 +1,6 @@
-# Implementation handoff — paused checkpoint
+# Implementation handoff — resumed checkpoint
 
-Paused at the user's explicit request on 2026-10-04 (Asia/Shanghai). All implementation agents have been interrupted. Do not resume implementation or deployment until the user asks.
+User resumed on 2026-10-04 (Asia/Shanghai). The saved pause state below remains historical; the Resume entry records current work.
 
 ## Repository and Git
 

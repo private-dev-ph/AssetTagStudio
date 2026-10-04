@@ -1,6 +1,6 @@
 # Implementation progress
 
-**Paused at the user's request — 2026-10-04.** All agents stopped; work preserved in checkpoint commits. Resume only when requested. Starting main27d0582aae742990d2c25c0ef752896ac420becd remains unchanged.
+**Resumed at the user's request — 2026-10-04.** Import and workspace work continue on their saved branches. Starting main27d0582aae742990d2c25c0ef752896ac420becd remains unchanged after another fetch. Primary checkout verification-hardening while renderer/test additions are verified.
 
 | Milestone | Feature branch | Status | Related files | Latest commit / tests | Issues / dependencies | Merge |
 |---|---|---|---|---|---|---|
@@ -15,4 +15,6 @@
 | Live subdomain deployment | web-deployment | Not started (paused) | Cloudflare Pages / tagstudio.zachcodes.dev | No remote push or deploy | Finish checks,push verified integration,select production branch,add hostname | Not deployed |
 
 See handoff.md for exact SHAs, worktree paths, failed checks, contracts and next action.
+
+Resume milestone: verification-hardening merged the latest saved integration as4d8e838, retaining current handoff plus verification scope when resolving its documentation-only conflict. Narrow-glyph rejection implemented and verified:40 unit tests, typecheck, lint and build pass. New browser negative-path tests remain pending UI verification. No deployment/push.
 

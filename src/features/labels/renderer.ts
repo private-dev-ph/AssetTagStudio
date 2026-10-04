@@ -91,6 +91,7 @@ export function interpolatePayload(record: AssetRecord, template: LabelTemplate)
 }
 
 export function wrapText(text: string, maxWidth: number, measure: (text: string) => number): string[] {
+  if (!Number.isFinite(maxWidth) || maxWidth <= 0) throw new Error('Text area must have a positive width. Increase label width or reduce code size and padding.');
   const lines: string[] = [];
   for (const paragraph of text.split(/\r?\n/)) {
     if (paragraph === '') { lines.push(''); continue; }
@@ -101,6 +102,7 @@ export function wrapText(text: string, maxWidth: number, measure: (text: string)
       if (line) lines.push(line);
       line = '';
       for (const char of Array.from(word)) {
+        if (measure(char) > maxWidth) throw new Error('Text cannot fit at this font size. Reduce the font size or increase the label area.');
         if (line && measure(line + char) > maxWidth) { lines.push(line); line = ''; }
         line += char;
       }
@@ -128,7 +130,7 @@ function drawWrappedField(context: CanvasRenderingContext2D, field: LabelField, 
   context.textAlign = alignment;
   const drawX = alignment === 'left' ? x : alignment === 'center' ? x + width / 2 : x + width;
   for (const line of lines) {
-    context.fillText(line, drawX, y + fontPx, width);
+    context.fillText(line, drawX, y + fontPx);
     y += lineHeight;
   }
   return y;
