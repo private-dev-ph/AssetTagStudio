@@ -70,19 +70,42 @@ function IdPage(props: DataToolsPageProps & { dataset: Dataset }) {
   const [batchStart, setBatchStart] = useState(1);
   const [batchCount, setBatchCount] = useState(() => Math.min(2_000, props.selectedIds.size));
   const [error, setError] = useState('');
+  const [continuationNotice, setContinuationNotice] = useState('');
+  const ownCommit = useRef<{ dataset: Dataset; batchStart: number; batchCount: number; nextSequence: number; appliedCount: number; sequenceLimitReached: boolean } | null>(null);
   const selectedCount = dataset.records.filter(record => props.selectedIds.has(record.id)).length;
   const populatedCount = dataset.records.filter(record => props.selectedIds.has(record.id) && Boolean(options.column && readValue(record, options.column).trim())).length;
   const blankCount = options.column ? selectedCount - populatedCount : 0;
   const eligibleCount = options.overwrite ? selectedCount : blankCount;
   useLayoutEffect(() => {
-    setOptions(current => ({ ...current, selectedIds: props.selectedIds, column: dataset.columns.includes(current.column) ? current.column : '' }));
-    setBatchStart(1); setBatchCount(Math.min(2_000, dataset.records.filter(record => props.selectedIds.has(record.id)).length));
+    const continuation = ownCommit.current?.dataset === dataset ? ownCommit.current : null;
+    ownCommit.current = null;
+    setOptions(current => ({ ...current, selectedIds: props.selectedIds, column: dataset.columns.includes(current.column) ? current.column : '', ...(continuation ? { start: continuation.nextSequence } : {}) }));
+    if (continuation) {
+      setBatchStart(continuation.batchStart); setBatchCount(continuation.batchCount);
+      setContinuationNotice(continuation.sequenceLimitReached
+        ? `Applied ${continuation.appliedCount} ID(s). The sequence limit was reached; choose a new sequence before continuing.`
+        : `Applied ${continuation.appliedCount} ID(s). Next sequence is ${continuation.nextSequence}. Use Next batch, then Preview IDs to continue.`);
+    } else {
+      setBatchStart(1); setBatchCount(Math.min(2_000, dataset.records.filter(record => props.selectedIds.has(record.id)).length));
+      setContinuationNotice('');
+    }
     setPreview(null); setError('');
-  }, [dataset, props.selectedIds, setPreview]);
-  const update = <K extends keyof IdGeneratorOptions>(key: K, value: IdGeneratorOptions[K]) => { setOptions(current => ({ ...current, [key]: value })); setPreview(null); };
+  }, [dataset, props.selectedIds, selectedCount, setPreview]);
+  const update = <K extends keyof IdGeneratorOptions>(key: K, value: IdGeneratorOptions[K]) => { setOptions(current => ({ ...current, [key]: value })); if (key === 'start') setContinuationNotice(''); setPreview(null); };
   const updateBatch = (start: number, count: number) => { setBatchStart(start); setBatchCount(count); setPreview(null); setError(''); };
   const run = () => { try { setError(''); const batch = selectBoundedRows(dataset, props.selectedIds, batchStart, batchCount, 5_000); setPreview(previewIds(dataset, { ...options, selectedIds: batch.selectedIds })); } catch (reason) { setError(reason instanceof Error ? reason.message : 'Could not create an ID preview.'); setPreview(null); } };
-  const apply = () => { if (!preview || props.busy) return; try { props.onCommitDataset(applyIdsToColumn(dataset, options.column, preview), 'Generate asset identifiers'); setPreview(null); } catch (reason) { setError(reason instanceof Error ? reason.message : 'Could not apply generated IDs.'); } };
+  const apply = () => {
+    if (!preview || props.busy) return;
+    try {
+      const next = applyIdsToColumn(dataset, options.column, preview);
+      const requestedNextSequence = options.start + preview.length;
+      const nextSequence = Math.min(requestedNextSequence, 999_999_999);
+      ownCommit.current = { dataset: next, batchStart, batchCount, nextSequence, appliedCount: preview.length, sequenceLimitReached: requestedNextSequence > 999_999_999 };
+      try { props.onCommitDataset(next, 'Generate asset identifiers'); }
+      catch (reason) { ownCommit.current = null; throw reason; }
+      setPreview(null);
+    } catch (reason) { setError(reason instanceof Error ? reason.message : 'Could not apply generated IDs.'); }
+  };
   return <ToolFrame title="Asset ID Generator" description="Create consistent identifiers for selected rows and check collisions before applying.">
     <section className="tool-card"><h2>Pattern</h2><div className="tool-grid">
       <ColumnSelect label="Identifier column" dataset={dataset} value={options.column} onChange={value => update('column', value)} />
@@ -90,11 +113,12 @@ function IdPage(props: DataToolsPageProps & { dataset: Dataset }) {
       <label className="tool-control">Prefix<input value={options.prefix} maxLength={200} onChange={event => update('prefix', event.target.value)} /></label><label className="tool-control">Suffix<input value={options.suffix} maxLength={200} onChange={event => update('suffix', event.target.value)} /></label>
       <label className="tool-control">Start sequence<input type="number" min={0} max={999999999} value={options.start} onChange={event => update('start', Number(event.target.value))} /></label><label className="tool-control">Zero padding<input type="number" min={1} max={12} value={options.padding} onChange={event => update('padding', Number(event.target.value))} /></label>
       <label className="tool-control">Year<input value={options.year} maxLength={4} onChange={event => update('year', event.target.value)} /></label><label className="tool-control">Date<input type="date" value={options.date} onChange={event => update('date', event.target.value)} /></label>
-    </div><div className="tool-row"><label><input type="checkbox" checked={options.blankOnly} onChange={event => { setOptions(current => ({ ...current, blankOnly: event.target.checked, overwrite: !event.target.checked })); setPreview(null); }} /> Generate for blank IDs only</label><label><input type="checkbox" checked={options.overwrite} onChange={event => { setOptions(current => ({ ...current, overwrite: event.target.checked, blankOnly: !event.target.checked })); setPreview(null); }} /> Allow overwriting existing IDs</label></div>
+    </div><div className="tool-row"><label><input type="checkbox" checked={options.blankOnly} onChange={event => { setOptions(current => ({ ...current, blankOnly: event.target.checked, overwrite: event.target.checked ? false : current.overwrite })); setPreview(null); }} /> Generate for blank IDs only</label><label><input type="checkbox" checked={options.overwrite} onChange={event => { setOptions(current => ({ ...current, overwrite: event.target.checked, blankOnly: event.target.checked ? false : true })); setPreview(null); }} /> Allow overwriting existing IDs</label></div>
     <p>{selectedCount} selected · {eligibleCount} eligible · {blankCount} blank · {populatedCount} populated. Blank-only is the safe default. Enable “Allow overwriting existing IDs” to include populated rows.</p>
+    {continuationNotice && <p role="status">{continuationNotice}</p>}
     {selectedCount === 0 ? <p>Select rows to preview IDs.</p> : options.column && eligibleCount === 0 ? <p>All selected IDs are populated. Enable overwriting to generate replacements.</p> : null}
     <BatchControls disabled={props.busy} selectedCount={selectedCount} start={batchStart} count={batchCount} maxCount={5_000} onChange={updateBatch} />
-    <button className="primary-button" disabled={props.busy || selectedCount === 0 || !options.column} onClick={run}>Preview IDs</button><ErrorText message={error} />
+    <button className="primary-button" disabled={props.busy || selectedCount === 0 || batchStart > selectedCount || !options.column} onClick={run}>Preview IDs</button><ErrorText message={error} />
     {preview && <div className="tool-preview"><p>{preview.length} ID(s) · {preview.filter(row => row.status === 'collision').length} collision(s)</p><p>Previewing {preview.length} of {selectedCount} selected row(s), starting at selected row {batchStart}.</p>{preview.length === 0 && eligibleCount > 0 ? <p>This batch has no blank IDs. Move to another batch or enable overwriting.</p> : null}<div className="tool-table"><table><thead><tr><th scope="col">Row</th><th scope="col">Before</th><th scope="col">Generated</th><th scope="col">Status</th></tr></thead><tbody>{preview.slice(0, 200).map(row => <tr key={row.rowId}><td>{row.rowId}</td><td>{row.before || '—'}</td><td>{row.after}</td><td>{row.message ?? row.status}</td></tr>)}</tbody></table></div><p>Apply affects only the {preview.length} rows in this preview.</p><button className="primary-button" disabled={props.busy || preview.length === 0 || preview.some(row => row.status === 'collision')} onClick={apply}>Apply IDs</button></div>}
     </section>
   </ToolFrame>;
@@ -108,15 +132,26 @@ function SerialPage(props: DataToolsPageProps & { dataset: Dataset }) {
   const [batchCount, setBatchCount] = useState(() => Math.min(2_000, props.selectedIds.size));
   const [error, setError] = useState('');
   const [pending, setPending] = useState(false);
+  const [continuationNotice, setContinuationNotice] = useState('');
+  const ownCommit = useRef<{ dataset: Dataset; batchStart: number; batchCount: number; mode: SerialOptions['mode']; appliedCount: number } | null>(null);
   const requestGeneration = useRef(new PreviewGeneration());
   useLayoutEffect(() => {
-    requestGeneration.current.invalidate(); setPending(false); setOptions(current => ({ ...current, selectedIds: props.selectedIds, column: dataset.columns.includes(current.column) ? current.column : '' }));
-    setBatchStart(1); setBatchCount(Math.min(2_000, dataset.records.filter(record => props.selectedIds.has(record.id)).length));
+    requestGeneration.current.invalidate(); setPending(false);
+    const continuation = ownCommit.current?.dataset === dataset ? ownCommit.current : null;
+    ownCommit.current = null;
+    setOptions(current => ({ ...current, selectedIds: props.selectedIds, column: dataset.columns.includes(current.column) ? current.column : '' }));
+    if (continuation?.mode !== 'deduplicate' && continuation) {
+      setBatchStart(continuation.batchStart); setBatchCount(continuation.batchCount);
+      setContinuationNotice(`Applied ${continuation.appliedCount} serial row(s). Use Next batch, then Preview serials to continue.`);
+    } else {
+      setBatchStart(1); setBatchCount(Math.min(2_000, dataset.records.filter(record => props.selectedIds.has(record.id)).length));
+      setContinuationNotice('');
+    }
     setPreview(null); setError('');
     return () => requestGeneration.current.invalidate();
   }, [dataset, props.selectedIds, setPreview]);
-  const update = <K extends keyof SerialOptions>(key: K, value: SerialOptions[K]) => { requestGeneration.current.invalidate(); setPending(false); setOptions(current => ({ ...current, [key]: value })); setPreview(null); };
-  const updateBatch = (start: number, count: number) => { requestGeneration.current.invalidate(); setPending(false); setBatchStart(start); setBatchCount(count); setPreview(null); setError(''); };
+  const update = <K extends keyof SerialOptions>(key: K, value: SerialOptions[K]) => { requestGeneration.current.invalidate(); setPending(false); setOptions(current => ({ ...current, [key]: value })); setContinuationNotice(''); setPreview(null); };
+  const updateBatch = (start: number, count: number) => { requestGeneration.current.invalidate(); setPending(false); setBatchStart(start); setBatchCount(count); setPreview(null); setError(''); setContinuationNotice(''); };
   const selectedCount = dataset.records.filter(record => props.selectedIds.has(record.id)).length;
   const run = async () => {
     if (pending) return;
@@ -134,7 +169,16 @@ function SerialPage(props: DataToolsPageProps & { dataset: Dataset }) {
       if (requestGeneration.current.isCurrent(generation)) setPending(false);
     }
   };
-  const apply = () => { if (!preview || props.busy) return; try { props.onCommitDataset(applySerialPreview(dataset, options.column, preview, options.mode === 'deduplicate'), options.mode === 'deduplicate' ? 'Deduplicate serial numbers' : 'Normalize serial numbers'); setPreview(null); } catch (reason) { setError(reason instanceof Error ? reason.message : 'Could not apply serial changes.'); } };
+  const apply = () => {
+    if (!preview || props.busy) return;
+    try {
+      const next = applySerialPreview(dataset, options.column, preview, options.mode === 'deduplicate');
+      ownCommit.current = { dataset: next, batchStart, batchCount, mode: options.mode, appliedCount: preview.length };
+      try { props.onCommitDataset(next, options.mode === 'deduplicate' ? 'Deduplicate serial numbers' : 'Normalize serial numbers'); }
+      catch (reason) { ownCommit.current = null; throw reason; }
+      setPreview(null);
+    } catch (reason) { setError(reason instanceof Error ? reason.message : 'Could not apply serial changes.'); }
+  };
   const drops = preview?.filter(row => row.drop).length ?? 0;
   return <ToolFrame title="Serial Tools" description="Normalize and validate serial values with a before and after preview.">
     <section className="tool-card"><div className="tool-grid"><ColumnSelect label="Serial column" dataset={dataset} value={options.column} onChange={value => update('column', value)} />
@@ -145,8 +189,9 @@ function SerialPage(props: DataToolsPageProps & { dataset: Dataset }) {
       <label className="tool-control">Known prefixes<input value={options.knownPrefixes} maxLength={1000} onChange={event => update('knownPrefixes', event.target.value)} placeholder="CZC, CC" /></label><label className="tool-control">Validation pattern<input value={options.pattern} maxLength={120} onChange={event => update('pattern', event.target.value)} placeholder="^[A-Z0-9]{6,20}$" /></label>
     </div><div className="tool-row"><label><input type="checkbox" checked={options.removeSeparators} onChange={event => update('removeSeparators', event.target.checked)} /> Remove spaces and separators</label></div>
     <p>{selectedCount} selected row(s). Previews are limited to 2,000 selected rows per batch.</p>
+    {continuationNotice && <p role="status">{continuationNotice}</p>}
     <BatchControls disabled={props.busy} selectedCount={selectedCount} start={batchStart} count={batchCount} maxCount={2_000} onChange={updateBatch} />
-    <button className="primary-button" disabled={props.busy || pending || !options.column || selectedCount === 0} onClick={run}>{pending ? 'Checking serials…' : 'Preview serials'}</button><ErrorText message={error} />
+    <button className="primary-button" disabled={props.busy || pending || !options.column || selectedCount === 0 || batchStart > selectedCount} onClick={run}>{pending ? 'Checking serials…' : 'Preview serials'}</button><ErrorText message={error} />
       {preview && <div className="tool-preview"><p>{preview.length} row(s) · {preview.filter(row => row.status === 'invalid').length} invalid · {preview.filter(row => row.status === 'duplicate').length} duplicates{drops ? ` · ${drops} row(s) will be removed` : ''}</p><p>Previewing {preview.length} of {selectedCount} selected row(s), starting at selected row {batchStart}.</p><div className="tool-table"><table><thead><tr><th scope="col">Row</th><th scope="col">Original</th><th scope="col">Result</th><th scope="col">Status</th></tr></thead><tbody>{preview.slice(0, 200).map(row => <tr key={row.rowId}><td>{row.rowId}</td><td>{row.before || '—'}</td><td>{row.after || '—'}</td><td>{row.message ?? row.status}</td></tr>)}</tbody></table></div>{options.mode !== 'validate' && <><p>Apply affects only the {preview.length} rows in this preview.</p><button className="primary-button" disabled={props.busy || preview.some(row => row.status === 'invalid')} onClick={apply}>{drops ? `Apply and remove ${drops} duplicates` : 'Apply serial changes'}</button></>}{drops > 0 && <p>For each repeated normalized serial, the first dataset row is retained. Review the preview before applying.</p>}</div>}
     <p>Custom patterns are length limited and reject known high-risk constructs before validation.</p></section>
   </ToolFrame>;

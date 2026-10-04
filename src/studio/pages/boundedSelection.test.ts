@@ -41,7 +41,11 @@ describe('bounded preview selection', () => {
     expect(() => selectBoundedRows(dataset, selected, 1.2, 1, 2)).toThrow(/Start position/);
     expect(() => selectBoundedRows(dataset, selected, 3, 1, 2)).toThrow(/Start position/);
     expect(() => selectBoundedRows(dataset, selected, 2, 2, 2)).toThrow(/Preview count/);
+    expect(() => selectBoundedRows(dataset, selected, 1, 2_001, 2_000)).toThrow(/Preview count/);
     expect(() => selectBoundedRows(dataset, selected, 1, 1.5, 2)).toThrow(/Preview count/);
+    expect(() => selectBoundedRows(dataset, selected, 1, Number.NaN, 2)).toThrow(/Preview count/);
+    expect(() => selectBoundedRows(dataset, selected, 1, Number.POSITIVE_INFINITY, 2)).toThrow(/Preview count/);
+    expect(() => selectBoundedRows(dataset, selected, 1, 0, 2)).toThrow(/Preview count/);
   });
 
   it('rejects empty selection and invalid limits', () => {
