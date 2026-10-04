@@ -20,6 +20,16 @@ describe('page layout', () => {
     expect(result.pages).toBe(Math.ceil(25 / result.labelsPerPage));
   });
 
+  it('applies signed calibration offsets to shared sheet positions and rejects clipping', () => {
+    const positive = calculateLayout(template, { ...DEFAULT_PAGE, offsetXMm: 1.5, offsetYMm: 0.8 }, 1);
+    expect(positive.positions[0]).toEqual({ xMm: 11.5, yMm: 10.8 });
+    const negative = calculateLayout(template, { ...DEFAULT_PAGE, offsetXMm: -1, offsetYMm: -2 }, 1);
+    expect(negative.positions[0]).toEqual({ xMm: 9, yMm: 8 });
+    expect(() => calculateLayout(template, { ...DEFAULT_PAGE, marginLeftMm: 0, offsetXMm: -0.1 }, 1)).toThrow(/off the page/);
+    expect(() => calculateLayout(template, { ...DEFAULT_PAGE, widthMm: 60, marginLeftMm: 0, marginRightMm: 0, offsetXMm: 0.1 }, 1)).toThrow(/off the page/);
+    expect(() => calculateLayout(template, { ...DEFAULT_PAGE, offsetYMm: Number.NaN }, 1)).toThrow(/Vertical calibration offset/);
+  });
+
   it('handles exact fit, uneven margins, empty datasets, and common page dimensions', () => {
     const exact = calculateLayout(template, { ...DEFAULT_PAGE, widthMm: 60, heightMm: 30, marginLeftMm: 0, marginRightMm: 0, marginTopMm: 0, marginBottomMm: 0, gapXMm: 0, gapYMm: 0 }, 0);
     expect(exact.pages).toBe(0);

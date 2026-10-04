@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_PAGE } from '../../types';
 import { DEFAULT_PREFERENCES, loadPreferences, parsePreferences, PREFERENCES_KEY, savePreferences } from './store';
 
 describe('local preferences', () => {
@@ -20,6 +21,15 @@ describe('local preferences', () => {
       hiddenFields: ['Location'],
     };
     expect(parsePreferences(JSON.stringify(value))).toEqual(value);
+  });
+
+  it('preserves optional specialized label settings and signed sheet offsets', () => {
+    const value = { ...DEFAULT_PREFERENCES,
+      template: { ...DEFAULT_PREFERENCES.template, mode: 'cable' as const, textLayout: 'mirrored' as const, fields: [{ source: 'Name', label: '', fontSize: 10, bold: true }], code: { ...DEFAULT_PREFERENCES.template.code, type: 'none' as const, field: '', payloadMode: 'text' as const } },
+      page: { ...DEFAULT_PREFERENCES.page, offsetXMm: -1.25, offsetYMm: 0.8 },
+    };
+    expect(parsePreferences(JSON.stringify(value))).toEqual(value);
+    expect(parsePreferences(JSON.stringify({ ...value, page: { ...value.page, offsetXMm: 500, offsetYMm: Number.NaN } })).page).toEqual(DEFAULT_PAGE);
   });
 
   it('replaces out-of-range saved dimensions and code settings with safe defaults', () => {

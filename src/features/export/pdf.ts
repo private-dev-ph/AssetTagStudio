@@ -1,7 +1,8 @@
 import { PDFDocument, type PDFImage } from 'pdf-lib';
 import type { AssetRecord, LabelTemplate, PageSettings } from '../../types';
-import { calculateLayout, mmToInches } from '../layout/pageLayout';
+import { mmToInches } from '../layout/pageLayout';
 import { renderLabel, validateTemplate } from '../labels/renderer';
+import { createPrintJob, type PrintJob } from '../../core/printJob';
 
 export type PdfExportOptions = {
   onProgress?: (completed: number, total: number) => void;
@@ -34,12 +35,18 @@ export async function generatePdf(
   page: PageSettings,
   options: PdfExportOptions = {},
 ): Promise<Uint8Array> {
+  const job = createPrintJob(records, template, page);
+  return generatePrintJobPdf(job, options);
+}
+
+export async function generatePrintJobPdf(job: PrintJob, options: PdfExportOptions = {}): Promise<Uint8Array> {
+  const { records, template, page } = job;
   if (!Array.isArray(records) || records.length > MAX_RECORDS) {
     throw new Error(`PDF export supports up to ${MAX_RECORDS.toLocaleString()} records.`);
   }
   if (records.length === 0) throw new Error('Add at least one record before creating a PDF.');
   validateTemplate(template);
-  const layout = calculateLayout(template, page, records.length);
+  if (job.labels.length !== records.length) throw new Error('Print job placements do not match its records.');
   checkCancelled(options.signal);
   const pdf = await PDFDocument.create();
   pdf.setTitle('Asset Tag Studio labels');
@@ -50,13 +57,18 @@ export async function generatePdf(
   let imageCacheBytes = 0;
   let renderCacheBytes = 0;
   let completed = 0;
+  let currentPageNumber = 0;
   let currentPage = pdf.addPage([pageWidth, pageHeight]);
   options.onProgress?.(0, records.length);
 
   for (let index = 0; index < records.length; index++) {
     checkCancelled(options.signal);
-    const positionIndex = index % layout.labelsPerPage;
-    if (index > 0 && positionIndex === 0) currentPage = pdf.addPage([pageWidth, pageHeight]);
+    const placement = job.labels[index]!;
+    if (placement.labelIndex !== index + 1 || placement.page < 1 || placement.page > job.layout.pages) throw new Error('Print job placements are invalid.');
+    if (placement.page !== currentPageNumber) {
+      if (currentPageNumber > 0) currentPage = pdf.addPage([pageWidth, pageHeight]);
+      currentPageNumber = placement.page;
+    }
     const record = records[index]!;
     const cacheKey = recordKey(record, template);
     let dataUrl = renderCache.get(cacheKey);
@@ -106,7 +118,7 @@ export async function generatePdf(
       }
       cachedImage = { image, cost: size };
     }
-    const position = layout.positions[positionIndex]!;
+    const position = placement.position;
     currentPage.drawImage(cachedImage.image, {
       x: position.xMm * MM_TO_POINTS,
       y: pageHeight - (position.yMm + template.heightMm) * MM_TO_POINTS,
