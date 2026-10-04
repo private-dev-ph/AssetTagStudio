@@ -95,3 +95,6 @@ Unsaved Pages setup:
 
 ## Resume — 2026-10-04
 User resumed implementation. Import and workspace agents active on their saved feature worktrees. Current primary checkout verification-hardening; merging saved integration for renderer/test updates. Remote main re-fetched and unchanged. Handoff conflict resolved by retaining latest checkpoint with verification scope preserved here. No deployment yet.
+Resume: reduce-pdf-memory ready; independently ran40 unit tests, typecheck, lint, build. Each new PNG is embedded immediately so PDF-lib releases decoded pixels. Production UI checkpoint8a independently passed3/3 tests with integration headers; dev cold worker loading previously failed3/3. Latest workspace state/security fixes await verification. Next: commit/merge PDF memory branch then latest UI and bounded import branches.
+
+PDF memory0f8c35e merged into web-deployment as7a06fe4; post-merge PDF tests5/5 pass. Current checkout verification-hardening; additive tracking conflict resolved preserving both milestone entries. Next: verify current UI changes before merging.

@@ -18,3 +18,5 @@ See handoff.md for exact SHAs, worktree paths, failed checks, contracts and next
 
 Resume milestone: verification-hardening merged the latest saved integration as4d8e838, retaining current handoff plus verification scope when resolving its documentation-only conflict. Narrow-glyph rejection implemented and verified:40 unit tests, typecheck, lint and build pass. New browser negative-path tests remain pending UI verification. No deployment/push.
 
+
+| PDF peak memory | reduce-pdf-memory | Ready to merge | export/pdf.ts, PDF tests/docs | 40 unit tests, types/lint/build pass | Eager public image.embed releases decoded channels; compressed final PDF remains in memory | Pending |
