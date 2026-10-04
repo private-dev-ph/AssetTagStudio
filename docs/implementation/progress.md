@@ -18,3 +18,5 @@ See handoff.md for exact SHAs, worktree paths, failed checks, contracts and next
 
 
 | PDF peak memory | reduce-pdf-memory | Ready to merge | export/pdf.ts, PDF tests/docs | 40 unit tests, types/lint/build pass | Eager public image.embed releases decoded channels; compressed final PDF remains in memory | Pending |
+
+Workspacea0ee1bd merged asb203510; inspected diff and clean status;46 postmergeunit tests pass. Root productionUI4/4 plus security/controls6/6 verified before merge. Boundworkbook931f5b0 ready: independent35unit/types/lint/build and dedicated source review found no blocking mismatch; documented residual compressed-dataCPU.

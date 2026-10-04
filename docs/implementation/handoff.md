@@ -96,3 +96,5 @@ Unsaved Pages setup:
 Resume: reduce-pdf-memory ready; independently ran40 unit tests, typecheck, lint, build. Each new PNG is embedded immediately so PDF-lib releases decoded pixels. Production UI checkpoint8a independently passed3/3 tests with integration headers; dev cold worker loading previously failed3/3. Latest workspace state/security fixes await verification. Next: commit/merge PDF memory branch then latest UI and bounded import branches.
 
 Workspace ready/merge: root independently verified47unit tests/types/lint and production workspace4/4 plus security/controls6/6. Integrateda0ee1bd; Playwright conflict was blank EOF lines only, retained Edge/dev settings pending verification branch production-server merge. Current mainunchanged. Next: postmergeunit checks, then reviewed workbook bounds and productionverification.
+
+Integration before workbook merge: web-deploymentb203510; mainunchanged27d0582. Workspacecomplete. Nextmergebound-workbook-imports931f5b0 after independent35tests/types/lint/build and securityapproval; workingtreesclean.
