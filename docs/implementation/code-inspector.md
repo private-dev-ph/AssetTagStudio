@@ -1,0 +1,9 @@
+# Local code inspector
+
+Dedicated Inspector subpage supports pasted text, PNG/JPEG upload, current generated label and explicit camera frame capture. QR and Code 128 decode in a module worker bundled with the app; no remote decoding or image uploads. Text is rendered as text, never an active link. Dataset comparison reports duplicate generated payloads and URI compatibility errors. Pasted content has no detected symbol format.
+
+Images are capped at 10 MiB and 8 megapixels using PNG/JPEG header preflight before browser bitmap decoding, with a 2048-pixel longest-edge decode canvas. Only one upright code is supported. Decoder workers time out after five seconds and terminate on success, failure, cancellation or page unmount. Camera starts only after an explicit click; audio is disabled. Streams stop on Stop, navigation/unmount or background tab. A late permission response closes tracks when its request is stale. Image/decoded data and dataset rows are not persisted.
+
+Pinned @zxing/library 0.23.0 (Apache-2.0), with its MIT ts-custom-error dependency, is used because the native BarcodeDetector is not broadly available and the existing jsqr dependency cannot decode Code 128. The library is in maintenance mode; periodically reassess its support/security. License texts ship in third-party-notices.txt. No WASM, CDN decoder, routing framework or camera library was added. Permissions-Policy changes camera to self only; microphone/other device features stay disabled. Production remains unchanged until a separately authorized release.
+
+Local unit verification covers actual encoder-to-decoder QR/Code128 pixels, missing/invalid codes, worker timeout/abort/error/cleanup, image bounds, URI checks and duplicate detection. Browser verification of UI/camera lifecycle remains part of integrated local testing. Physical camera/scanner and diverse browsers need separate hardware validation.
