@@ -35,8 +35,6 @@ Clean isolated npmci --ignore-scripts installed242 packages/audit0, then173 unit
 
 Initial failures and fixes remain recorded in handoff/report; final33-test run has zero failed. Vite large-bundle, development ESLint support and terminal color-environment warnings were observed and not suppressed. The first two are documented maintenance/performance follow-ups; the color warning has no application effect. Main/live unchanged; no publishing or remote tests.
 
-## Accepted validation limits
-
 ## User testing follow-up review — 2026-10-05
 
 Reviewed integrated follow-up source7bbb0e7: renderer uses explicit black text fill; the asset checkbox width is scoped and tool headers are horizontal; previews preserve aspect ratio and async cleanup; inventory remains in memory, saved settings remain local. Footer links are explicit navigation with noopener/noreferrer. License text remains served by the build. Scrollbar themes include a forced-colours native fallback. No dependency, storage schema, network API or credential was added.
@@ -49,5 +47,9 @@ Reviewed integrated follow-up source7bbb0e7: renderer uses explicit black text f
 | Medium / label readability | Text-only backgrounds left text fill white | Fixed2773dc0: drawFields uses black; actual mirrored interior pixels and optional QR checked in Edge | Physical paper/contrast remains unverified |
 
 Independent read-only reviewer rechecked895f962/d1d4344 and closed both table-sizing and batch-continuation findings, with no further actionable issue. Root verified focused18 tests and full181 unit/type/lint/build; five new Edge scenarios passed after correcting the new Pattern selector (its accessible label includes token help). Fresh npm audit --audit-level=moderate --json reports0 vulnerabilities across292 lock-graph dependencies. Final complete browser run and Git verification follow on feature-expansion. No critical/high unresolved security finding identified.
+
+The first complete follow-up browser run passed37/38 and exposed a transient duplicate status during template save/refresh. The unchanged quota test still confirmed zero partial entries after the failed write. The source fix hides success notices while loading or after a read failure, preserving error alerts and recovery controls. Five unchanged quota/retry repetitions pass; final complete rerun follows. No security boundary or saved settings behavior changes.
+
+## Accepted validation limits
 
 No physical printer/scanner/camera trial; no Firefox/Safari run; no FieldLens receiver CSV ingestion test. Main JS bundle exceeds Vite500kB warning threshold; warning is retained. Decode supports one upright QR/Code128 in PNG/JPEG; other formats/symbologies unsupported. Browser workers/OffscreenCanvas/IndexedDB availability and storage restrictions can produce explicit failures. No critical/high unresolved finding identified in this review; final local verification passed.
