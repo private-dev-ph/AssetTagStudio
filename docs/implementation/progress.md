@@ -38,10 +38,12 @@ Integrated in d310520 without conflicts; final diff is limited to generator/test
 
 ## Portfolio contract and main-production request
 
-Owner now explicitly authorizes merging web-deployment into main and serving main; the initial no-main-merge rule applied to the first implementation and is superseded for this release. Owner initially requested preparation for future public publication. GitHub reported private then public during preparation without any session visibility action; clarification is pending. Owner selected Apache-2.0, to be installed on its own feature branch.
+Owner now explicitly authorizes merging web-deployment into main and serving main; the initial no-main-merge rule applied to the first implementation and is superseded for this release. GitHub reported private then public during preparation without any session visibility action; owner explicitly confirmed Keep public. Owner selected Apache-2.0, installed on its own feature branch.
 
 | Milestone / feature | Feature branch | Status | Related files | Latest relevant commit / tests | Unresolved issues / dependencies | Merge |
 |---|---|---|---|---|---|---|
-| Portfolio README and showcase contract | portfolio-showcase-contract | Ready to merge | README, portfolio-showcase.json, scripts/verify-portfolio-showcase.mjs, docs/portfolio-integration.md, deployment/tracking docs | Based on740b46d; upstream schema constraints/actual loader atc2661ae and tracked media verified; independent review clean; types/lint/100unit pass | Visibility decision pending; metadata works for public release | Pending |
+| Portfolio README and showcase contract | portfolio-showcase-contract | Complete | README, portfolio-showcase.json, scripts/verify-portfolio-showcase.mjs, docs/portfolio-integration.md, deployment/tracking docs | Feature0f6421a; upstream schema constraints/actual loader atc2661ae and tracked media verified; independent review clean; types/lint/100unit pass | Public default-branch discovery follows main merge | e4f6fb0 |
 | Serve main from Cloudflare Pages | web-deployment → main | Not started | Git branches/provider production setting | main before cutover27d0582 | Depends on reviewed contract branch and verified release | Pending |
-| Apply Apache-2.0 | apache-license | Not started | LICENSE, NOTICE, package metadata, README/integration docs | Explicit owner selection2026-10-04 | Retain third-party notices | Pending |
+| Apply Apache-2.0 | apache-license | Ready to merge | LICENSE, NOTICE, package metadata, build-copy script, README/integration docs | Based one4f6fb0; official text, matching package metadata, exact dist copies and third-party notices verified; build/lint/portfolio verifier pass; audit0 | No dependency version changes; generated dist legal files ignored | Pending |
+
+2026-10-04 license verification: source/worker/CSS bundle hashes unchanged; the build adds only LICENSE.txt and NOTICE.txt. User confirmed the already-public repository should stay public. No visibility mutation was performed. Main merge uses fast-forward only after integration, preserving all feature history and avoiding force updates. Main before merge27d0582.

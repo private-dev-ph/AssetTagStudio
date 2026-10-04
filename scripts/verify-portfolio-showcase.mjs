@@ -73,4 +73,4 @@ const readme = await readFile(path.join(root, 'README.md'), 'utf8');
 assert(readme.includes('portfolio-showcase.json') && readme.includes('private'), 'README must explain metadata and private discovery status.');
 assert(readme.includes('docs/media/sample-labels.pdf'), 'README must retain the sample PDF link.');
 console.log('Portfolio schema constraints, real loader, Live gating, sections, tracked media and README references passed.');
-console.log('Repository visibility is unchanged; public discovery is deferred by the owner.');
+console.log('Live portfolio discovery additionally requires a public repository and this manifest on its default branch.');
