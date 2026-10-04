@@ -35,6 +35,21 @@ describe('label template and payload', () => {
     expect(context.rotate).toHaveBeenCalledWith(Math.PI);
   });
 
+  it('renders a seven-level location hierarchy through the label preview renderer', async () => {
+    const fillText = vi.fn();
+    const context = { fillStyle: '', strokeStyle: '', lineWidth: 1, font: '', textAlign: 'left', fillRect: vi.fn(), strokeRect: vi.fn(), measureText: (text: string) => ({ width: text.length * 5 }), fillText, save: vi.fn(), translate: vi.fn(), rotate: vi.fn(), restore: vi.fn() } as unknown as CanvasRenderingContext2D;
+    vi.stubGlobal('document', { createElement: () => ({ width: 0, height: 0, getContext: () => context, toDataURL: () => 'data:image/png;base64,AA==' }) });
+    const sources = ['Site', 'Building', 'Floor', 'Room', 'Rack', 'Shelf', 'Bin'];
+    const values = Object.fromEntries(sources.map((source, index) => [source, ['Warehouse A', 'Building 1', 'Floor 2', 'Room 201', 'Rack A', 'Shelf 03', 'Bin 07'][index]!]));
+    const location: LabelTemplate = {
+      ...template, mode: 'location', widthMm: 70, heightMm: 60, paddingMm: 2,
+      fields: sources.map(source => ({ source, label: source, fontSize: 12, bold: true })),
+      code: { ...template.code, type: 'qr', field: 'Site', sizeMm: 18, payload: `location://site/${sources.map(source => `{${source}}`).join('/')}`, payloadMode: 'location' },
+    };
+    expect(await renderLabel({ id: 'location', values }, location)).toMatch(/^data:image\/png/);
+    expect(fillText).toHaveBeenCalledTimes(7);
+  });
+
   it('reports a missing raw value and unknown placeholder with repair guidance', () => {
     expect(() => interpolatePayload({ id: 'empty', values: {} }, template)).toThrow(/no value.*choose another code column/i);
     expect(() => interpolatePayload(record, { ...template, code: { ...template.code, payload: '{Missing column}' } })).toThrow(/not a column.*Fix the template/i);
