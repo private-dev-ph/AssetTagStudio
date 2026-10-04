@@ -2,6 +2,14 @@
 
 The app builds to `dist` and has no backend, database, account or runtime secret. Node 24 LTS and the checked-in lockfile are the build contract.
 
+## Verified deployment
+
+- Live: [tagstudio.zachcodes.dev](https://tagstudio.zachcodes.dev), with [tagstudio.pages.dev](https://tagstudio.pages.dev) as the provider mirror.
+- Cloudflare Pages project: `tagstudio`; Git repository: `private-dev-ph/AssetTagStudio`; production branch: `web-deployment`.
+- Build: `npm run build`, output: `dist`, `NODE_VERSION=24`. Automatic Git deployments enabled; main is unchanged.
+- Custom hostname maps to `tagstudio.pages.dev` through a proxied CNAME; dashboard reports Active and SSL enabled. HTTPS200 and all five configured security headers verified on both hostnames on2026-10-04.
+- GitHub Actions independently verifies clean install, types, lint, unit/browser tests, build and audit. The deployed application bundle matches the locally verified build.
+
 ## Cloudflare Pages (recommended)
 
 1. Connect this GitHub repository in Cloudflare Pages.
@@ -9,7 +17,7 @@ The app builds to `dist` and has no backend, database, account or runtime secret
 3. Select React/Vite, build command `npm run build`, output directory `dist`. Set NODE_VERSION to 24 if the environment does not provide it.
 4. Deploy and verify the resulting HTTPS URL; configure a custom domain only if desired.
 
-Cloudflare's Git integration automatically builds branch changes after the project is connected. No deployment token goes into this repository. CI runs independently on pull requests and pushes to main/web-deployment. This repository currently provides deployment configuration; a live URL must be recorded only after a provider deploy is actually verified.
+Cloudflare's Git integration automatically builds branch changes after the project is connected. No deployment token goes into this repository. CI runs independently on pull requests and pushes to main/web-deployment. Live URLs above were recorded after provider deployment and HTTPS verification.
 
 `public/_headers` is copied to the build and applies to Cloudflare static responses. It disallows remote scripts, framing, objects and forms, and restricts workers to the same origin. Inline styles are needed for physical preview dimensions; scripts remain external. No Functions are used. Other providers must configure equivalent headers themselves.
 

@@ -21,3 +21,5 @@ Final clean dependency install completed. Final applicable commands: npm run typ
 Live-smoke preview-copy regression: Ready to merge. The note now compares rendered preview labels with actual records on the page, not empty grid capacity. Sample8-label and capped80-label regressions passed2/2 on production build; typecheck/lint passed.
 
 Deployed-suite support: Ready to merge on verification-hardening. PLAYWRIGHT_BASE_URL skips the local server and binds privacy checks to the configured origin. Typecheck/lint/build and2 focused production security tests passed.
+
+Live verification on372d90f:15/16 passed including CSV/XLSX/XLS, QR/Code128 PDF downloads,834-page boundary and error paths. Privacy check caught a Cloudflare Web Analytics script injected only on the custom-domain zone (provider mirror clean). No inventory POST/value URL detected. Removing hostname injection before rerun; deployment milestone remains Testing.

@@ -17,9 +17,9 @@
     "Physical page layout",
     "Multi-page PDF export"
   ],
-  "liveUrl": null,
+  "liveUrl": "https://tagstudio.zachcodes.dev",
   "screenshot": "docs/media/workspace.png",
   "demo": "docs/media/demo.gif",
   "samplePdf": "docs/media/sample-labels.pdf",
-  "status": "MVP verified locally; live deployment pending"
+  "status": "Live MVP; Cloudflare Pages deployment and HTTPS verified"
 }

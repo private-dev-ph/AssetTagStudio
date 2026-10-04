@@ -2,6 +2,8 @@
 
 Turn spreadsheet inventory into print-ready QR and Code 128 labels, entirely in your browser.
 
+[Live demo](https://tagstudio.zachcodes.dev) · [Cloudflare Pages mirror](https://tagstudio.pages.dev)
+
 ![Workspace](docs/media/workspace.png)
 
 **No login, no backend, no inventory uploads.** Import CSV or Excel, choose an identifier, configure a label and export a PDF sheet at actual physical size.
@@ -27,7 +29,7 @@ Choose **Try sample data**, select a unique identifier, edit the visible fields,
 
 ![Demo workflow](docs/media/demo.gif)
 
-[Example PDF](docs/media/sample-labels.pdf). Live deployment setup is in [deployment.md](docs/deployment.md); no unverified demo URL is advertised.
+[Example PDF](docs/media/sample-labels.pdf). Deployment settings and verification are in [deployment.md](docs/deployment.md).
 
 The screenshots, 9.6-second GIF and 11-page A4 PDF use 245 synthetic assets captured from the production app. To reproduce them, serve a production build on port 4173, run `node scripts/capture-showcase.mjs`, then `python scripts/assemble-demo.py` with Pillow installed. Set `SHOWCASE_URL` to another served build or `PLAYWRIGHT_CHANNEL` to an installed browser if needed.
 

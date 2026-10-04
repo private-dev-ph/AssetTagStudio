@@ -29,3 +29,5 @@ Resource limits and print/output limitations are accepted because parsing/export
 Supplemental review of capture scripts, synthetic media/PDF, ADRs and notices found no sensitive-data, network, dependency or artifact concern. Root reviewed CSS410da15: no security behavior changed. All feature work is integrated in95cac68; final suite/live-header checks pending.
 
 Final integrated suite on95cac68:64/64 unit,15/15 production browser tests, typecheck/lint/build passed; npm audit reports0 vulnerabilities. Includes the CSS regression assertion and all security/error/privacy paths. Live-host security header verification remains pending.
+
+Live finding (Medium, hosting privacy): zone-level Cloudflare Web Analytics injects an external beacon script on tagstudio.zachcodes.dev, absent from tagstudio.pages.dev. Live same-origin privacy test failed while other15 tests passed; no inventory POST/value URL found, restrictive CSP blocks remote script execution. Disposition in progress: exclude this hostname from automatic injection, retain portfolio analytics, then rerun privacy/full hosted suite.
