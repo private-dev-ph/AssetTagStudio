@@ -12,7 +12,7 @@ The shared template supports QR, Code 128, and text-only labels. Cable presets m
 
 ## Printer calibration
 
-Sheet calibration offsets are millimeters and default to zero. Layout calculation applies the offsets to every sheet origin and rejects any offset that would clip a label beyond the physical page. Printer profile JSON is versioned and strict; it contains only a name and X/Y settings. Profiles use the shared IndexedDB `printers` store, while the active profile ID uses local storage. Oversized profile files are rejected before reading, and the UI offers explicit clear-and-recover after printer-library corruption. No imported rows are included.
+Sheet calibration offsets are millimeters and default to zero. Layout calculation applies the offsets to every sheet origin and rejects any offset that would clip a label beyond the physical page. Printer profile JSON is versioned and strict; it contains only a name and X/Y settings. Profiles use the shared IndexedDB `printers` store, while the active profile ID uses local storage. Oversized profile files are rejected before reading, and the UI offers explicit clear-and-recover after any initial printer-library load failure, including overflow. No imported rows are included.
 
 The calibration PDF is vector artwork with corner crosses, a center crosshair, a 1 mm ruler with 10 mm labels, a reference box, and print-at-actual-size instructions. It requires paper at least 100 × 80 mm so these marks stay legible and clear of the rulers.
 

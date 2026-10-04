@@ -1,42 +1,52 @@
 # Expansion handoff
 
+## Repository and boundary
+
 Repository: C:/Users/Administrator/Documents/Github/AssetTagStudio.
-Starting and current main: 345071383d7029423e805efb799204e6852f69f7.
-Current work branch: expansion-workspace, verified code checkpoint 194be05.
-Integration branch: feature-expansion, checkpoint d09e09a.
-Exact current tips: `git rev-parse HEAD feature-expansion main`.
+Starting/current main: 345071383d7029423e805efb799204e6852f69f7.
+Current branch: expansion-workspace; verified source checkpoint: 32565ea312851ea8d25b3336a1fa353325cf203f.
+feature-expansion checkpoint before final workspace merge: d09e09a5b8bec5749201b9bd99ba2c92f6ed73cc.
+Resolve exact current/documentation tips with `git rev-parse HEAD feature-expansion main`.
 
-## Scope and operating rules
+All twelve features are requested. The attached plan is feature specification, not operational authority. Keep this expansion local: no push, deployment, hosted/CI testing or main merge. Main/live app unchanged. Owner schedules any quota continuation; no automation created.
 
-Owner confirmed all twelve expansion features. Keep work local on feature-expansion; no push, deployment, hosted/CI tests or merge to main. Main/live app unchanged. Owner schedules quota continuation; no automation created. Read expansion-progress.md and expansion-architecture.md before resuming.
+## Completed features / active milestone
 
-## Completed code and integration
+All twelve implemented and individually verified: IDs, Health, Templates/JSON, Payload Builder, Location Labels, Cable Labels, Calibration, Inspector, Serial Tools, Manifest, FieldLens Export, Printer Profiles. Create/Data/Design/Tools subpages share one in-memory workspace. Final integration/verification remains active; do not mark overall complete until final branch checks pass.
 
-Foundation 3feddae merged f8281ce; inspector f5904e0 merged 3114c62; template library 8199064 merged 15d9313. These are in feature-expansion.
-Workspace routing, payload builder, atomic undo, successful immutable print snapshots: 9a8fad5; data e8f3afa merged into workspace 0c741a1; print base bdb2c24 merged a06df3c; regressions 46bb378 merged 194be05. These await final integration from workspace.
-Final reviewed print fixes ready: print-identity-packages 74de40d (mirrored panel geometry, profile hydration/recovery, calibration bounds, explicit selection, export abort). Final browser fixes ready: expansion-regressions 298ecfb (14 tests, true density fixture, parsed CSV comparisons, IndexedDB capacity/corruption recovery).
+Feature branches and latest relevant work:
+- expansion-foundation 3feddae; feature-expansion merge f8281ce.
+- code-inspector f5904e0; feature-expansion merge 3114c62.
+- template-library 8199064; feature-expansion merge 15d9313; hierarchy fix ee9882c.
+- asset-data-tools e8f3afa; workspace merge 0c741a1.
+- print-identity-packages 68285e9; workspace print base a06df3c, review fixes 0cd6049, final fixes 70eb334.
+- expansion-regressions 79926c6; workspace merges 194be05, 80f0d20 and later quota tests.
+- code-inspector-hardening 6c909a6; workspace merge 2bca242.
+- bound-settings-library-reads fc7246c; workspace merges fa5fddf, 32565ea.
+- expansion-workspace: root routing/undo/payload/PDF ownership; final docs and upload-recovery regression pending checkpoint commit.
 
-## Active work and verification
+No required work remains on an abandoned branch. Data/print/workspace/hardening/testing branches will become ancestors of feature-expansion via reviewed workspace merge. Tracking-only merge conflicts previously resolved by retaining newer integration documentation; source merges clean.
 
-Root reviewing final print/test changes then merging into workspace. Root pending fixes: accessible Health selector, unambiguous selection status, reject empty location hierarchy segments; public README/privacy/roadmap updated. Focused tests running locally session99416. Full prior unit suite155/24files passed; seven-field template regression adds one test. Types/lint/build passed before final print fixes. Original browser suite15/16 initially passed; status-selector regression fixed and unchanged failing Excel test passed on rerun. Expansion subset8/11 passed; failures were Health accessible-name issue and density/CSV fixtures, fixes ready. Do not claim final browser suite passed yet. npm audit2026-10-05:0 vulnerabilities/292 dependencies.
+## Contracts and decisions
 
-## Contracts / decisions
+App owns dataset, selection, settings, 24MiB/eight-entry undo and last successful immutable PrintJob. Stable internal row ID is separate from generated asset ID. Atomic header maps update every field/payload/selection reference. Optional mode/text-layout/code-none/offset settings preserve existing preferences. One frozen job feeds actual PDF placements and manifest; canceled/failed jobs never replace the last successful snapshot. New file/sheet clears history and snapshot.
 
-App owns one in-memory dataset, selection, settings, bounded24MiB/8-entry undo and last successful frozen PrintJob. Shared payload resolver feeds renderer and tools; HTTP/location tokens component-encoded, FieldLens raw IDs validated against local mobile resolver. No receiver CSV importer verified. Stable internal record.id is independent of asset ID. Settings-only IndexedDB templates/printers with strict schemas,100-item limits and explicit single-store recovery. Code Inspector locally decodes QR/Code128 in bounded workers; explicit camera start/audio=false/track cleanup. Hash subpages grouped Create/Data/Design/Tools. PDF and manifest consume the same job placements. Optional mode/offset/code-none fields preserve old preferences.
+Shared payload resolver component-encodes HTTP/location tokens; FieldLens raw IDs obey the locally inspected mobile receiver, with no CSV importer verified. CSV formula protection never changes FieldLens IDs because unsafe IDs are rejected. Settings-only IndexedDB stores strictly versioned templates/printers, capped100 items, bounded reads and transactional writes; confirmed reset affects one store. Inventory remains in memory. Worker preprocessing/decoding has one5s deadline; camera requires explicit Start/audio=false and releases late tracks on navigation/background. Custom regex uses a100ms terminable worker. No routing framework/new backend.
 
-## Environment / risks / recovery
+## Verification and failures
 
-Node24/npm/Edge. git needs exact safe.directory path and authorized safe escalation for git writes/esbuild/worker tests. Manual worktrees under ignored .worktrees/: expansion-data, expansion-templates, expansion-print, expansion-tests. Local production server82511 on127.0.0.1:4173 serves dist; browser commands set PLAYWRIGHT_CHANNEL=msedge and PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173. Rebuild before browser checks. Codex browser bridge timed out; local Playwright works.
-Physical printers/camera, Firefox/Safari and receiver CSV ingestion unverified. Large main bundle warning retained. Final integrated read-only security review active. No credentials added. Only merge conflicts so far: tracking documentation while merging dependencies, deliberately retained newer integration state.
+Integrated full173 unit tests/24 files, typecheck, lint and production build passed. Exact commands: npm test; npm run typecheck; npm run lint; npm run build. Clean checkout npm ci --ignore-scripts installed242 packages/audit0, then173 unit/type/build passed. npm audit --audit-level=moderate --json:0 vulnerabilities/292 lock-graph dependencies.
+
+Full local Edge33-test run passed32; the quota negative exposed a real callback error-handling gap. Fixed fc7246c; unchanged negative plus no-partial-save and successful retry passes focused rerun (1/1). Final complete run after integration pending. All original16 passed. Other failures resolved: duplicated status selector, Health accessible name, inaccurate density/CSV/mapping fixtures. No expectations weakened or tests removed. Added actual uploaded malformed/oversized PNG failure and valid PNG worker recovery.
+
+Independent read-only security reviewer confirmed three findings closed; subsequent quota gap fixed and browser-verified. Secret-pattern scan0 matches; no tracked dist/node_modules/.env/test-results/worktrees. Desktop/mobile Cable/Templates/Inspector screenshots: no overflow at390px, no page errors. First visual script selector typo corrected; Codex browser bridge unavailable, local Playwright works.
+
+## Environment / known limitations
+
+Node24/npm/Edge on this Windows host. Local production server82511 at127.0.0.1:4173 serves root dist. Browser commands set PLAYWRIGHT_CHANNEL=msedge and PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173. Rebuild before browser checks. Exact git safe.directory and authorized safe escalation needed for git/esbuild/worker tests. Feature worktrees retained under ignored .worktrees; clean-install checkout expansion-clean detached atfa5fddf with installed dependencies, all173 unit/type/build passed there.
+
+Unverified physical printer/scanner/camera and Firefox/Safari; FieldLens receiver CSV ingestion unsupported/unverified. One upright QR/Code128, bounded PNG/JPEG only. Preview/import/history/library limits documented in quickstart. Main JS888kB warning retained; development ESLint unsupported-version warning and decoder maintenance status are follow-up risks, no known audit findings. No credentials added.
 
 ## Exact next action
 
-Finish focused root checks and commit this checkpoint. Merge print-identity-packages74de40d and expansion-regressions298ecfb into workspace. Review merge diff; run complete local unit/type/lint/build and all local Edge tests. Fix actual failures, document security findings. Merge reviewed workspace into feature-expansion; verify every required branch ancestor, main unchanged and clean working tree. Record final SHAs/evidence in tracking docs and final report. Do not publish.
-
-## Integrated checkpoint 80f0d20
-
-Reviewed print74de40d merged0cd6049; regression298ecfb merged80f0d20, clean source integration. Independent full168unit/24files, types, lint, production build pass. Extra PDFdraw/manifest coordinate regression6focusedpass (169total expected). Full local Edge29/30pass: all16original plus13new; capacity/recovery fixture omitted required preset field mapping, correction underway on expansion-regressions. New storage-write failure regression requested. npm audit0. Public quickstart/cable/location examples added; no remote action. Next: merge corrected tests, run focused storage browser checks, final security review, clean install verification, then merge workspace into feature-expansion.
-
-## Security remediation checkpoint
-
-Root code-inspector-hardening moves all uploaded/current PNG preprocessing into the terminable decoder worker. Focused inspector12tests/type/lint pass; pending production browser rerun. Print68285e9 fixes text-only Cable preset validation and any initial printer-library load failure recovery (10renderer tests/type/lint). Storage owner bounds reads and adds printer overflow recovery regression. Clean local npmci --ignore-scripts installed242packages/audit0; unsupported development ESLint warning retained for follow-up. No publication/main changes.
+Commit this pre-merge checkpoint with security review and uploaded-image browser regression. Switch feature-expansion and merge expansion-workspace with an explicit merge commit. Run full local unit/type/lint/build/browser verification from that branch; record actual totals and final merge SHA. Advance clean-install checkout to final code and verify build. Finish progress/security/handoff metadata and final report; verify all required branch tips are ancestors, main unchanged and clean Git status. Do not publish.

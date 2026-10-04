@@ -55,6 +55,24 @@ test('the current QR and Code 128 labels decode to the selected identifier', asy
   await expect(page.locator('dd').first()).toHaveText('CODE 128');
 });
 
+test('uploaded image bounds fail safely and a valid PNG recovers through worker preprocessing', async ({ page }) => {
+  await loadCsv(page, 'image.csv', 'Asset ID,Name\nIMAGE-0042,Switch\n');
+  const image = page.getByRole('img', { name: /Rendered label for/ });
+  await expect(image).toBeVisible();
+  const png = Buffer.from((await image.getAttribute('src'))!.split(',')[1]!, 'base64');
+  await page.getByRole('link', { name: 'Code inspector', exact: true }).click();
+  const oversized = Buffer.alloc(24); oversized.set([137, 80, 78, 71, 13, 10, 26, 10]);
+  oversized.writeUInt32BE(9000, 16); oversized.writeUInt32BE(9000, 20);
+  await page.getByLabel('Code image').setInputFiles({ name: 'oversized.png', mimeType: 'image/png', buffer: oversized });
+  await expect(page.getByRole('alert')).toContainText('8 megapixels');
+  await page.getByLabel('Code image').setInputFiles({ name: 'malformed.png', mimeType: 'image/png', buffer: Buffer.from('<script>alert(1)</script>') });
+  await expect(page.getByRole('alert')).toContainText('valid PNG or JPEG');
+  await page.getByLabel('Code image').setInputFiles({ name: 'label.png', mimeType: 'image/png', buffer: png });
+  await expect(page.locator('pre.tool-preview')).toHaveText('IMAGE-0042');
+  await expect(page.locator('dd').first()).toHaveText('QR CODE');
+  await expect(page.getByRole('alert')).toHaveCount(0);
+});
+
 test('pasted unsafe content is displayed as text and never opened or executed', async ({ page }) => {
   const requests: string[] = [];
   const pageErrors: string[] = [];
