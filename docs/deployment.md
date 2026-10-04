@@ -5,8 +5,8 @@ The app builds to `dist` and has no backend, database, account or runtime secret
 ## Verified deployment
 
 - Live: [tagstudio.zachcodes.dev](https://tagstudio.zachcodes.dev), with [tagstudio.pages.dev](https://tagstudio.pages.dev) as the provider mirror.
-- Cloudflare Pages project: `tagstudio`; Git repository: `private-dev-ph/AssetTagStudio`; production branch: `web-deployment`.
-- Build: `npm run build`, output: `dist`, `NODE_VERSION=24`. Automatic Git deployments enabled; main is unchanged.
+- Cloudflare Pages project: `tagstudio`; Git repository: `private-dev-ph/AssetTagStudio`; production branch: `main` after the owner-authorized cutover on 2026-10-04. Exact cutover status and release SHA are recorded in implementation/handoff.md.
+- Build: `npm run build`, output: `dist`, `NODE_VERSION=24`. Automatic Git deployments enabled. The initial release used `web-deployment`; the owner subsequently authorized merging it into main and serving main.
 - Custom hostname maps to `tagstudio.pages.dev` through a proxied CNAME; dashboard reports Active and SSL enabled. HTTPS 200 and all five configured security headers verified on both hostnames on 2026-10-04.
 - GitHub Actions independently verifies clean install, types, lint, unit/browser tests, build and audit. The deployed application bundle matches the locally verified build.
 - The existing zone-wide Web Analytics setting injected a beacon on the custom hostname. An active Configuration Rule named `Disable analytics for AssetTag Studio` matches `(http.host eq "tagstudio.zachcodes.dev")` and sets Disable RUM. The app response now has no injected beacon; the portfolio retains its analytics. Preserve this rule when changing hosting. See [Cloudflare's RUM configuration setting](https://developers.cloudflare.com/rules/configuration-rules/settings/#disable-real-user-monitoring-rum).
@@ -14,7 +14,7 @@ The app builds to `dist` and has no backend, database, account or runtime secret
 ## Cloudflare Pages (recommended)
 
 1. Connect this GitHub repository in Cloudflare Pages.
-2. Choose `web-deployment` as the production branch for this implementation. Do not merge into main as part of setup.
+2. Choose `main` as the production branch. The previous `web-deployment` production setting belongs to the initial release; the owner authorized the main cutover afterward.
 3. Select React/Vite, build command `npm run build`, output directory `dist`. Set NODE_VERSION to 24 if the environment does not provide it.
 4. Deploy and verify the resulting HTTPS URL; configure a custom domain only if desired.
 

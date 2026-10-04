@@ -41,6 +41,40 @@ Records stay in browser memory; only preferences persist. No analytics, remote p
 
 CSV and Excel normalize to one record model. A millimeter layout engine and shared label renderer keep the sheet preview aligned with the exported PDF. [Architecture and decisions](docs/architecture.md).
 
+## Project purpose and role
+
+The goal is a focused, account-free inventory-to-label workflow with no spreadsheet upload service. Project ownership spans product scoping, browser-local architecture, spreadsheet normalization, the label editor, physical layout/rendering, PDF generation, testing, documentation and deployment.
+
+## Technical highlights
+
+- Module-worker imports with deadlines, cancellation and ZIP/CFB preflight bounds before opening Excel files.
+- String-valued records preserve leading zeroes; arbitrary headers remain ordinary fields, including prototype-like names.
+- Canonical millimeter layout and a shared canvas renderer keep preview and PDF positions consistent.
+- QR density/quiet-zone checks and Code128 character/width validation prevent misleading output.
+- Paginated tables, capped previews, bounded caches and eager PDF image embedding limit retained work.
+- Preference-only persistence, same-origin runtime assets and constrained static response headers preserve the privacy boundary.
+
+## Challenges and solutions
+
+| Challenge | Approach |
+|---|---|
+| CSV/Excel differences and malformed input | One normalized model, explicit diagnostics, worker lifecycle guards and file/archive quotas. |
+| Screen appearance versus physical print output | Shared rendering, millimeter positioning, QR decode tests and PDF page-size checks; hardware calibration still needs a real printer/scanner. |
+| Large export memory and responsiveness | Release decoded PDF pixels, bound caches, yield between batches and support cancellation. Unique-label export costs remain unbenchmarked. |
+| Hosting-injected analytics | Disable Cloudflare RUM for this hostname and verify hosted network/privacy behavior. |
+
+## Results and lessons
+
+The live MVP has 100 passing unit tests, including 36 sample-pack checks, and a 16-scenario production browser suite verified in local Edge, CI Chromium and hosted Edge. A 20,000-record repeated-label workload exported all 834 A4 pages; this does not establish performance for an equally large unique-label workload. The showcase includes an 11-page sample PDF for 245 synthetic assets, a 9.6-second demo and actual production screenshots.
+
+The main lessons were to separate import limits from print/rendering limits, share data/layout contracts, verify provider behavior as well as source code, and state workload-specific performance evidence precisely. Printer/scanner hardware and Firefox/Safari remain unverified.
+
+## Portfolio integration
+
+The root [portfolio-showcase.json](portfolio-showcase.json) follows the [portfolio contract](https://github.com/private-dev-ph/portfolio/blob/main/docs/portfolio-showcases.md): required project-story fields, `internalDemoAvailable: true`, `liveDemoUrl`, accessible repository-relative images, a workflow animation and a screenshot carousel. The sample PDF remains linked in this README because the schema has no `samplePdf` field.
+
+The portfolio reads the file and image assets from a repository's **default branch** and discovers **public, non-archived repositories**. This metadata is prepared for public publication; private repositories are not automatically listed. Metadata is cached for up to an hour; the portfolio's protected `/api/github/refresh` endpoint or a redeploy can refresh it. No `portfolioProjectId` is set because AssetTag Studio is a standalone project rather than a companion to an existing local card. See [integration verification](docs/portfolio-integration.md).
+
 ## Running locally
 
 Requires Node 24 and npm.
