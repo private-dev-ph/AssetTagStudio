@@ -11,3 +11,5 @@ scope.onmessage = (event: MessageEvent<Request>) => {
     scope.postMessage({ id, ok: false, error: error instanceof Error ? error.message : 'Invalid pattern.' });
   }
 };
+// Native worker loading has a separate deadline from regex execution.
+scope.postMessage({ ready: true });

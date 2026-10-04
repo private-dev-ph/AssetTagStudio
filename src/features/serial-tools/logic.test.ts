@@ -36,13 +36,44 @@ describe('serial pattern worker', () => {
   it('terminates a worker that exceeds its time limit', async () => {
     vi.useFakeTimers();
     const terminate = vi.fn();
-    class StalledWorker { onmessage: ((event: MessageEvent) => void) | null = null; onerror: (() => void) | null = null; postMessage() {} terminate = terminate; }
+    class StalledWorker { static current: StalledWorker; constructor() { StalledWorker.current = this; } onmessage: ((event: MessageEvent) => void) | null = null; onerror: (() => void) | null = null; postMessage() {} terminate = terminate; }
     vi.stubGlobal('Worker', StalledWorker);
     const result = testSerialPattern('^A+$', ['AAAA']);
     const rejected = expect(result).rejects.toThrow(/time limit/);
+    StalledWorker.current.onmessage!({ data: { ready: true } } as MessageEvent);
     await vi.advanceTimersByTimeAsync(101);
     await rejected;
     expect(terminate).toHaveBeenCalledOnce();
+  });
+  it('allows bounded slow startup without spending the execution budget', async () => {
+    vi.useFakeTimers();
+    class ReadyWorker {
+      static current: ReadyWorker;
+      constructor() { ReadyWorker.current = this; }
+      onmessage: ((event: MessageEvent) => void) | null = null;
+      onerror: (() => void) | null = null;
+      terminate = vi.fn();
+      postMessage = vi.fn((request: { id: number }) => this.onmessage!({ data: { id: request.id, ok: true, matches: [true] } } as MessageEvent));
+    }
+    vi.stubGlobal('Worker', ReadyWorker);
+    const result = testSerialPattern('^A+$', ['AAAA']);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(ReadyWorker.current.postMessage).not.toHaveBeenCalled();
+    ReadyWorker.current.onmessage!({ data: { ready: true } } as MessageEvent);
+    await expect(result).resolves.toEqual([true]);
+    expect(ReadyWorker.current.terminate).toHaveBeenCalledOnce();
+  });
+  it('terminates workers that never finish starting', async () => {
+    vi.useFakeTimers();
+    const terminate = vi.fn();
+    class NeverReadyWorker { static current: NeverReadyWorker; constructor() { NeverReadyWorker.current = this; } onmessage: ((event: MessageEvent) => void) | null = null; onerror = null; postMessage() {} terminate = terminate; }
+    vi.stubGlobal('Worker', NeverReadyWorker);
+    const result = testSerialPattern('^A+$', ['AAAA']);
+    const rejected = expect(result).rejects.toThrow(/startup/);
+    await vi.advanceTimersByTimeAsync(5001); await rejected;
+    expect(terminate).toHaveBeenCalledOnce();
+    NeverReadyWorker.current.onmessage!({ data: { ready: true } } as MessageEvent);
+    expect(vi.getTimerCount()).toBe(0);
   });
 });
 
