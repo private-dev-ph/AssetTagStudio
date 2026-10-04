@@ -46,6 +46,12 @@ describe('row normalization', () => {
     expect(dataset.columns).toEqual(['__proto__', 'constructor']);
   });
 
+  it('records source header whitespace and counts skipped empty rows without changing duplicate rejection', () => {
+    const data = normalizeRows([[' Asset  ID ', 'Name'], ['A-1', 'Pump'], ['', '  '], ['A-2', 'Valve']]);
+    expect(data.importAudit).toEqual({ sourceHeaders: [' Asset  ID ', 'Name'], removedEmptyRows: 1 });
+    expect(getMessage(() => normalizeRows([[' ID ', 'ID'], ['a', 'b']]))).toMatch(/Duplicate header/);
+  });
+
   it('warns for empty columns and rejects data beyond the header', () => {
     expect(normalizeRows([['id', 'unused'], ['1', '']]).warnings).toEqual(['Empty columns: unused.']);
     expect(getMessage(() => normalizeRows([['id'], ['1', '', 'extra']]))).toMatch(/beyond the 1 declared headers/);
