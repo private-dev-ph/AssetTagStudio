@@ -73,7 +73,7 @@ The main lessons were to separate import limits from print/rendering limits, sha
 
 The root [portfolio-showcase.json](portfolio-showcase.json) follows the [portfolio contract](https://github.com/private-dev-ph/portfolio/blob/main/docs/portfolio-showcases.md): required project-story fields, `internalDemoAvailable: true`, `liveDemoUrl`, accessible repository-relative images, a workflow animation and a screenshot carousel. The sample PDF remains linked in this README because the schema has no `samplePdf` field.
 
-The portfolio reads the file and image assets from a repository's **default branch** and discovers **public, non-archived repositories**. This metadata is prepared for public publication; private repositories are not automatically listed. Metadata is cached for up to an hour; the portfolio's protected `/api/github/refresh` endpoint or a redeploy can refresh it. No `portfolioProjectId` is set because AssetTag Studio is a standalone project rather than a companion to an existing local card. See [integration verification](docs/portfolio-integration.md).
+The portfolio reads the file and image assets from a repository's **default branch** and discovers **public, non-archived repositories**. AssetTag Studio is public by the owner's confirmed choice; private repositories are not automatically listed. Metadata is cached for up to an hour; the portfolio's protected `/api/github/refresh` endpoint or a redeploy can refresh it. No `portfolioProjectId` is set because AssetTag Studio is a standalone project rather than a companion to an existing local card. See [integration verification](docs/portfolio-integration.md).
 
 ## Running locally
 
@@ -116,4 +116,4 @@ The [post-MVP roadmap](docs/roadmap.md) lists all twelve deferred features and d
 
 ## License
 
-No project license has been chosen by the repository owner. Third-party notices are in [public/third-party-notices.txt](public/third-party-notices.txt); those notices do not grant a license to this project.
+Licensed under [Apache-2.0](LICENSE). Project attribution is in [NOTICE](NOTICE). Third-party components keep their own licenses, listed in [public/third-party-notices.txt](public/third-party-notices.txt). The production build includes LICENSE.txt and NOTICE.txt alongside those notices.

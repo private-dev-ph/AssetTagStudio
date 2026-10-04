@@ -19,4 +19,4 @@ These are the twelve later-feature items explicitly deferred in section 6 of the
 
 A practical sequence is saved templates + JSON portability, then printer profiles/calibration and sequential IDs. Additional code formats and logos/images should follow real user needs. PWA updates and FieldLens integration need their own compatibility/privacy decisions. This ordering is a suggestion, not a change to the original scope.
 
-Separate reliability follow-up includes physical printing/scanning, Firefox/Safari coverage, benchmarking large unique-label PDFs, workbook fuzz testing, bundle splitting, updating the development linter and choosing a project license. Those tasks improve the existing MVP rather than add the roadmap features above.
+Separate reliability follow-up includes physical printing/scanning, Firefox/Safari coverage, benchmarking large unique-label PDFs, workbook fuzz testing, bundle splitting and updating the development linter. Those tasks improve the existing MVP rather than add the roadmap features above. The owner selected Apache-2.0 for the project after the initial release.
