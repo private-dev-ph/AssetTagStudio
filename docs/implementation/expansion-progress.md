@@ -22,3 +22,11 @@ All twelve requested features implemented and locally verified on feature-expans
 | Final verification / security / docs | feature-expansion | Complete | report, security, handoff, README | 4388d76 | Final175/175 unit (24 files), type/lint/build;33/33 Edge; audit0; secret0; all10 branch tips ancestors | Clean-installed final build passes; final documentation committed at checkpoint completion | All source integrated |
 
 Resolved failures are retained in the report/security history: duplicated selection status, Health accessible name, inaccurate density/CSV/mapping fixtures, synchronous quota exception propagation and worker startup timing. No test removed, suppressed or weakened. Vite large-bundle and unsupported development ESLint warnings retained as follow-up. Hardware, cross-browser and receiver ingestion gaps are explicitly documented; they do not represent omitted exporter/tool implementation.
+
+## User testing follow-up — 2026-10-05
+
+| Milestone / feature | Feature branch | Status | Related files | Latest relevant commit | Tests completed | Dependencies / unresolved issues | Merge status |
+|---|---|---|---|---|---|---|---|
+| Readable text-only cable wraps, Health tables, themed scrollbars and privacy/footer | polish-workspace-interface | Testing | renderer, SpecialLabelsPage, styles, App | Cable fix2773dc0; interface working changes | Renderer10/10; Edge3/3 canvas ink/QR/table widths/themes/footer; type/lint/build pass | Integrated five browser regressions still required | Not merged |
+| ID eligibility guidance and bounded serial batches | improve-data-tool-batches | Testing | DataToolsPage, selection helper/tests | a1cd2a7 | Focused18/18 unit; type/lint | Review follow-up: explicit overwrite permission and same-Apply batch/sequence continuity | Not merged |
+| Follow-up integrated verification | feature-expansion | Not started | browser tests, implementation docs | Base04d115e | Pending focused and full local checks | Main/live app stay unchanged | Pending |
