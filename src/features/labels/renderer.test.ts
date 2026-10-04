@@ -37,7 +37,8 @@ describe('label template and payload', () => {
   });
 
   it('renders mirrored labels into disjoint half-width panels, including optional codes', async () => {
-    const fillText = vi.fn();
+    const textColors: string[] = [];
+    const fillText = vi.fn(() => { textColors.push(context.fillStyle as string); });
     const drawImage = vi.fn();
     const translate = vi.fn();
     const rotate = vi.fn();
@@ -58,6 +59,7 @@ describe('label template and payload', () => {
     const cable: LabelTemplate = { ...template, mode: 'cable', textLayout: 'mirrored', widthMm: 70, heightMm: 18, paddingMm: 1, fields: [{ source: 'From', label: '', fontSize: 5, bold: true }], code: { ...template.code, type: 'none', field: '' } };
     await renderLabel({ id: 'cable', values: { From: 'SW01 → SERVER01' } }, cable);
     expect(fillText).toHaveBeenCalledTimes(1);
+    expect(textColors).toEqual(['#000']);
     expect(canvases.map(({ width, height }) => [width, height])).toEqual([[280, 144], [560, 144]]);
     expect(drawImage).toHaveBeenCalledTimes(2);
     expect(drawImage.mock.calls[0]?.slice(5)).toEqual([0, 0, 280, 144]);
@@ -68,6 +70,7 @@ describe('label template and payload', () => {
     for (const code of [
       { ...template.code, type: 'qr' as const, field: 'Asset ID', sizeMm: 10 },
       { ...template.code, type: 'code128' as const, field: 'Asset ID', barcodeHeightMm: 8 },
+      { ...template.code, type: 'code128' as const, field: 'Asset ID', barcodeHeightMm: 8, barcodeText: false },
     ]) {
       drawImage.mockClear();
       await renderLabel(record, { ...cable, code });
@@ -79,6 +82,7 @@ describe('label template and payload', () => {
       expect(leftPanel[1]).toBeLessThanOrEqual(rightPanel[0]);
       expect(rightPanel[1]).toBe(560);
     }
+    expect(textColors.every(color => color === '#000')).toBe(true);
   });
 
   it('renders a seven-level location hierarchy through the label preview renderer', async () => {

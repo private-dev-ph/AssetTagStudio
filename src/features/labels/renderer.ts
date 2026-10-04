@@ -125,6 +125,8 @@ function drawWrappedField(context: CanvasRenderingContext2D, field: LabelField, 
 }
 
 function drawFields(context: CanvasRenderingContext2D, record: AssetRecord, template: LabelTemplate, x: number, y: number, width: number, bottom: number): void {
+  // Text must not inherit the white background used by text-only labels.
+  context.fillStyle = '#000';
   let nextY = y;
   for (const field of template.fields) {
     const value = readStringValue(record, field.source) ?? '';
