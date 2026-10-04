@@ -10,6 +10,13 @@ test('payload and Code 128 errors recover without downloading a misleading PDF',
   await expect(page.locator('.export-error')).toContainText('printable ASCII');
   await page.getByRole('button', { name: 'QR code', exact: true }).click();
   await page.getByLabel('QR content mode').selectOption('template');
+  await page.getByLabel('Payload template').fill('A'.repeat(500));
+  await page.getByRole('button', { name: 'Code 128', exact: true }).click();
+  await expect(page.locator('.single-preview')).toContainText('too wide');
+  await page.getByRole('button', { name: 'QR code', exact: true }).click();
+  await page.getByLabel('Code size', { exact: true }).fill('8');
+  await expect(page.locator('.single-preview')).toContainText('too dense');
+  await page.getByLabel('Code size', { exact: true }).fill('20');
   await page.getByLabel('Payload template').fill('https://inventory.example/{missing}');
   await expect(page.locator('.single-preview')).toContainText('not a column');
   await page.getByLabel('Payload template').fill('https://inventory.example/{asset_id}');
